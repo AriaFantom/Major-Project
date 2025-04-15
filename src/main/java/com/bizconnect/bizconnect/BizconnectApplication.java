@@ -1,13 +1,13 @@
-package com.project.major;
+package com.bizconnect.bizconnect;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class MajorProjectApplication {
+public class BizconnectApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(MajorProjectApplication.class, args);
+		SpringApplication.run(BizconnectApplication.class, args);
 	}
 
 }
