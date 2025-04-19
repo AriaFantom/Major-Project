@@ -1,4 +1,4 @@
-package com.bizconnect.bizconnect;
+package com.project.bizconnect;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
