@@ -1,6 +1,7 @@
 package com.project.bizconnect.service.impl;
 
 import com.project.bizconnect.dto.JwtAuthenticationResponse;
+import com.project.bizconnect.dto.RefreshTokenRequest;
 import com.project.bizconnect.dto.SignInRequest;
 import com.project.bizconnect.dto.SignUpRequest;
 import com.project.bizconnect.entity.Role;
@@ -55,5 +56,23 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         return jwtAuthenticationResponse;
 
+    }
+
+    public JwtAuthenticationResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
+        String userEmail = jwtService.extractUsername(refreshTokenRequest.getToken());
+
+        User user = usersRepository.findByEmail(userEmail).orElseThrow();
+        if(jwtService.isTokenValid(refreshTokenRequest.getToken(), user)) {
+            var jwt = jwtService.generateToken(user);
+
+            JwtAuthenticationResponse jwtAuthenticationResponse = new JwtAuthenticationResponse();
+
+            jwtAuthenticationResponse.setToken(jwt);
+            jwtAuthenticationResponse.setRefreshToken(refreshTokenRequest.getToken());
+            return jwtAuthenticationResponse;
+
+        }
+
+        return null;
     }
 }

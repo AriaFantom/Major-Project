@@ -1,6 +1,7 @@
 package com.project.bizconnect.controller;
 
 import com.project.bizconnect.dto.JwtAuthenticationResponse;
+import com.project.bizconnect.dto.RefreshTokenRequest;
 import com.project.bizconnect.dto.SignInRequest;
 import com.project.bizconnect.dto.SignUpRequest;
 import com.project.bizconnect.entity.User;
@@ -28,4 +29,10 @@ public class AuthenticationController {
     public ResponseEntity<JwtAuthenticationResponse> signin(@RequestBody SignInRequest signInRequest) {
         return ResponseEntity.ok(authenticationService.signin(signInRequest));
     }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<JwtAuthenticationResponse> refresh(@RequestBody RefreshTokenRequest refreshTokenRequest) {
+        return ResponseEntity.ok(authenticationService.refreshToken(refreshTokenRequest));
+    }
+
 }
