@@ -1,22 +1,30 @@
 package com.project.bizconnect.service.impl;
 
-import com.project.bizconnect.dto.UserDto;
-import com.project.bizconnect.entity.User;
-import com.project.bizconnect.mapper.UserMapper;
+
 import com.project.bizconnect.repository.UsersRepository;
 import com.project.bizconnect.service.UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private UsersRepository usersRepository;
+    private final UsersRepository usersRepository;
+
     @Override
-    public UserDto createUser(UserDto userDto) {
-
-        User user = UserMapper.mapUserDtoToUser(userDto);
-        User savedUser = usersRepository.save(user);
-
-        return UserMapper.mapUserToUserDto(savedUser);
+    public UserDetailsService userDetailsService() {
+        return new UserDetailsService() {
+            @Override
+            public UserDetails loadUserByUsername(String username) {
+               return usersRepository.findByEmail(username)
+                       .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+            }
+        };
     }
 }

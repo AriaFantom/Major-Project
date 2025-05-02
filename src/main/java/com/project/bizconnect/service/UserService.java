@@ -1,8 +1,8 @@
 package com.project.bizconnect.service;
 
-import com.project.bizconnect.dto.UserDto;
+import org.springframework.security.core.userdetails.UserDetailsService;
 
 public interface UserService {
-    UserDto createUser(UserDto userDto);
 
+    UserDetailsService userDetailsService();
 }
