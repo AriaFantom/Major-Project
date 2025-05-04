@@ -2,8 +2,6 @@ package com.project.bizconnect.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Setter
@@ -22,7 +20,7 @@ public class OrderItem {
 
     // Many order items belong to one order
     @ManyToOne
-    @JoinColumn(name = "order_id", nullable = false)
+    @JoinColumn(name = "orders_id", nullable = false)
     private Order order;
 
     // The product that was ordered
