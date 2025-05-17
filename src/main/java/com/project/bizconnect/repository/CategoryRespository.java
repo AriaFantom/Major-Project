@@ -1,10 +1,10 @@
 package com.project.bizconnect.repository;
 
 
+import com.project.bizconnect.entity.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
 
-public interface CategoryRespository extends JpaRepository<CategoryRespository, Long> {
+public interface CategoryRespository extends JpaRepository<Category, Long> {
 
 }

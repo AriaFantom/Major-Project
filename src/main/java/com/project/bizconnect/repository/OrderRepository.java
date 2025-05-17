@@ -1,6 +1,7 @@
 package com.project.bizconnect.repository;
 
+import com.project.bizconnect.entity.Order;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface OrderRepository extends JpaRepository<OrderRepository, Long> {
+public interface OrderRepository extends JpaRepository<Order, Long> {
 }
