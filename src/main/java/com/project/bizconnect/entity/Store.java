@@ -36,6 +36,7 @@ public class Store {
     @Column(name = "phone_number")
     private String phoneNumber;
 
+    @Column(name = "address", nullable = false)
     private String address;
 
     @Column(name = "website_url")
