@@ -17,9 +17,10 @@ public class Store {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(nullable = false)
     private Long storeId;
 
-    @Column(name = "store_name")
+    @Column(name = "store_name", nullable = false)
     private String storeName;
 
     private String description;
@@ -30,7 +31,6 @@ public class Store {
     @JoinColumn(name = "owner_user_id", nullable = false)
     private User owner;
 
-    @Column(nullable = false)
     private String email;
 
     @Column(name = "phone_number")
