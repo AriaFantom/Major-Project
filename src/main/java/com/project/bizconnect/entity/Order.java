@@ -2,7 +2,9 @@ package com.project.bizconnect.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.util.Date;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Getter
@@ -15,13 +17,14 @@ public class Order {
     private Long orderId;
 
     @Column(nullable = false)
-    private Date orderDate;
-
-    @Column(nullable = false)
     private String status;
 
     @Column(nullable = false)
     private Double totalAmount;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
     // Many orders can be placed by one user (customer)
     @ManyToOne
@@ -33,10 +36,6 @@ public class Order {
     @JoinColumn(name = "store_id", nullable = false)
     private Store store;
 
-    // If a saved payment method was used
-//    @ManyToOne
-//    @JoinColumn(name = "payment_method_id")
-//    private PaymentMethod paymentMethod;
 
     // One order has many order items
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
