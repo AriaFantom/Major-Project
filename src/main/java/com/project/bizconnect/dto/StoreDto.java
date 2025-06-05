@@ -2,6 +2,7 @@ package com.project.bizconnect.dto;
 
 import lombok.Data;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Data
 public class StoreDto {
@@ -9,6 +10,7 @@ public class StoreDto {
     private String storeName;
     private String description;
     private boolean verified;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Long ownerUserId;
     private String email;
     private String phoneNumber;

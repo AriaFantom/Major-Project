@@ -4,10 +4,12 @@ import com.project.bizconnect.dto.JwtAuthenticationResponse;
 import com.project.bizconnect.dto.RefreshTokenRequest;
 import com.project.bizconnect.dto.SignInRequest;
 import com.project.bizconnect.dto.SignUpRequest;
+import com.project.bizconnect.dto.UserDto;
 import com.project.bizconnect.entity.User;
 import com.project.bizconnect.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,4 +37,8 @@ public class AuthenticationController {
         return ResponseEntity.ok(authenticationService.refreshToken(refreshTokenRequest));
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<UserDto> getCurrentUser() {
+        return ResponseEntity.ok(authenticationService.getCurrentUser());
+    }
 }

@@ -34,6 +34,11 @@ public class AdminController {
         return ResponseEntity.ok("admin route");
     }
 
+    @GetMapping("/stores")
+    public ResponseEntity<?> getAllStoresWithUsers() {
+        return ResponseEntity.ok(adminService.getAllStoresWithUsers());
+    }
+
     @GetMapping("/users")
     public ResponseEntity<List<UserDto>> getAllUsers() {
         List<UserDto> users = adminService.getAllUsers();

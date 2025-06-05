@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/seller")
 @RequiredArgsConstructor
@@ -17,6 +19,12 @@ public class SellerController {
     public ResponseEntity<StoreDto> createStore(@RequestBody StoreDto storeDto) {
         StoreDto created = storeService.createStore(storeDto);
         return ResponseEntity.ok(created);
+    }
+
+    @GetMapping("/stores")
+    public ResponseEntity<List<StoreDto>> getMyStores() {
+        List<StoreDto> stores = storeService.getStoresByAuthenticatedSeller();
+        return ResponseEntity.ok(stores);
     }
 
     @GetMapping

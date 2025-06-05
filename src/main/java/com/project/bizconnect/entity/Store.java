@@ -27,7 +27,7 @@ public class Store {
 
     private boolean isVerified = false;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "owner_user_id", nullable = false)
     private User owner;
 
