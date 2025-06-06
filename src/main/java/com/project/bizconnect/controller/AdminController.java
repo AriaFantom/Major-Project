@@ -15,6 +15,8 @@ import com.project.bizconnect.service.ProductService;
 import com.project.bizconnect.service.CategoryService;
 import com.project.bizconnect.service.AdminService;
 import com.project.bizconnect.service.StoreService;
+import com.project.bizconnect.dto.CustomerStatsDto;
+import com.project.bizconnect.dto.SellerStatsDto;
 import com.project.bizconnect.dto.UserDto;
 import com.project.bizconnect.dto.RoleChangeRequest;
 import com.project.bizconnect.dto.StoreVerificationRequest;
