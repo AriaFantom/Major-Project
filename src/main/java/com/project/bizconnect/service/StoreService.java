@@ -9,3 +9,4 @@ public interface StoreService {
     List<StoreDto> getStoresByAuthenticatedSeller();
     boolean isAuthenticatedUserStoreOwner(Long storeId);
 }
+

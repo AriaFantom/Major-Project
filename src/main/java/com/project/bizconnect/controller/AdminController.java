@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.project.bizconnect.dto.ProductDto;
+import com.project.bizconnect.dto.ProductResponseDto;
 import com.project.bizconnect.dto.CategoryDto;
 import com.project.bizconnect.dto.CategoryResponseDto;
 import com.project.bizconnect.service.ProductService;
@@ -65,7 +66,7 @@ public class AdminController {
     }
 
     @PostMapping("/products")
-    public ResponseEntity<ProductDto> createProduct(@RequestBody ProductDto productDto) {
+    public ResponseEntity<ProductResponseDto> createProduct(@RequestBody ProductDto productDto) {
         if (productDto.getStoreId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Store ID is required");
         }
@@ -79,7 +80,9 @@ public class AdminController {
             }
         }
         ProductDto created = productService.createProduct(productDto);
-        return ResponseEntity.ok(created);
+        // Convert to response DTO with additional details
+        ProductResponseDto response = productService.getProductByIdWithDetails(created.getProductId());
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/categories")
@@ -96,14 +99,32 @@ public class AdminController {
     }
 
     @GetMapping("/products")
-    public ResponseEntity<List<ProductDto>> getAllProducts() {
-        List<ProductDto> products = productService.getAllProducts();
+    public ResponseEntity<List<ProductResponseDto>> getAllProducts() {
+        List<ProductResponseDto> products = productService.getAllProductsWithDetails();
         return ResponseEntity.ok(products);
+    }
+
+    @GetMapping("/products/{id}")
+    public ResponseEntity<ProductResponseDto> getProductById(@PathVariable Long id) {
+        ProductResponseDto product = productService.getProductByIdWithDetails(id);
+        return ResponseEntity.ok(product);
     }
 
     @GetMapping("/categories")
     public ResponseEntity<List<CategoryResponseDto>> getAllCategories() {
         List<CategoryResponseDto> categories = categoryService.getAllCategoriesWithDetails();
         return ResponseEntity.ok(categories);
+    }
+
+    @GetMapping("/customers/stats")
+    public ResponseEntity<List<CustomerStatsDto>> getAllCustomersWithStats() {
+        List<CustomerStatsDto> customers = adminService.getAllCustomersWithStats();
+        return ResponseEntity.ok(customers);
+    }
+
+    @GetMapping("/sellers/stores")
+    public ResponseEntity<List<SellerStatsDto>> getAllSellersWithStores() {
+        List<SellerStatsDto> sellers = adminService.getAllSellersWithStores();
+        return ResponseEntity.ok(sellers);
     }
 }

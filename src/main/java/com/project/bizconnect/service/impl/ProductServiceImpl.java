@@ -1,6 +1,7 @@
 package com.project.bizconnect.service.impl;
 
 import com.project.bizconnect.dto.ProductDto;
+import com.project.bizconnect.dto.ProductResponseDto;
 import com.project.bizconnect.entity.Product;
 import com.project.bizconnect.entity.Store;
 import com.project.bizconnect.entity.Category;
@@ -31,6 +32,30 @@ public class ProductServiceImpl implements ProductService {
         dto.setStockQuantity(product.getStockQuantity());
         dto.setStoreId(product.getStore().getStoreId());
         dto.setCategoryId(product.getCategory() != null ? product.getCategory().getId() : null);
+        return dto;
+    }
+
+    // Add new method to map to ProductResponseDto with additional details
+    private ProductResponseDto mapToResponseDto(Product product) {
+        ProductResponseDto dto = new ProductResponseDto();
+        dto.setProductId(product.getProductId());
+        dto.setName(product.getName());
+        dto.setDescription(product.getDescription());
+        dto.setPrice(product.getPrice());
+        dto.setStockQuantity(product.getStockQuantity());
+
+        // Set store information
+        Store store = product.getStore();
+        dto.setStoreId(store.getStoreId());
+        dto.setStoreName(store.getStoreName());
+
+        // Set category information if available
+        Category category = product.getCategory();
+        if (category != null) {
+            dto.setCategoryId(category.getId());
+            dto.setCategoryName(category.getName());
+        }
+
         return dto;
     }
 
@@ -77,6 +102,30 @@ public class ProductServiceImpl implements ProductService {
 
         return productRepository.findByStore(store).stream()
                 .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ProductResponseDto> getAllProductsWithDetails() {
+        return productRepository.findAll().stream()
+                .map(this::mapToResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public ProductResponseDto getProductByIdWithDetails(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+        return mapToResponseDto(product);
+    }
+
+    @Override
+    public List<ProductResponseDto> getProductsByStoreIdWithDetails(Long storeId) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new IllegalArgumentException("Store not found"));
+
+        return productRepository.findByStore(store).stream()
+                .map(this::mapToResponseDto)
                 .collect(Collectors.toList());
     }
 }

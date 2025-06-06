@@ -1,9 +1,6 @@
 package com.project.bizconnect.controller;
 
-import com.project.bizconnect.dto.CategoryDto;
-import com.project.bizconnect.dto.CategoryResponseDto;
-import com.project.bizconnect.dto.ProductDto;
-import com.project.bizconnect.dto.StoreDto;
+import com.project.bizconnect.dto.*;
 import com.project.bizconnect.service.CategoryService;
 import com.project.bizconnect.service.ProductService;
 import com.project.bizconnect.service.StoreService;
@@ -35,6 +32,7 @@ public class SellerController {
         List<StoreDto> stores = storeService.getStoresByAuthenticatedSeller();
         return ResponseEntity.ok(stores);
     }
+
 
     @GetMapping
     public ResponseEntity<String> getSeller() {
@@ -81,14 +79,29 @@ public class SellerController {
     }
 
     @GetMapping("/products")
-    public ResponseEntity<List<ProductDto>> getProductsByStore(@RequestParam Long storeId) {
+    public ResponseEntity<List<ProductResponseDto>> getProductsByStore(@RequestParam Long storeId) {
+        // Verify store ownership
         boolean isOwner = storeService.isAuthenticatedUserStoreOwner(storeId);
         if (!isOwner) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "You can only view products for stores you own");
         }
 
-        List<ProductDto> products = productService.getProductsByStoreId(storeId);
+        List<ProductResponseDto> products = productService.getProductsByStoreIdWithDetails(storeId);
         return ResponseEntity.ok(products);
+    }
+
+    @GetMapping("/products/{productId}")
+    public ResponseEntity<ProductResponseDto> getProductById(@PathVariable Long productId) {
+        ProductResponseDto product = productService.getProductByIdWithDetails(productId);
+
+        // Verify store ownership
+        boolean isOwner = storeService.isAuthenticatedUserStoreOwner(product.getStoreId());
+        if (!isOwner) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "You can only view products from stores you own");
+        }
+
+        return ResponseEntity.ok(product);
     }
 }
