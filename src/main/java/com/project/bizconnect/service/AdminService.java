@@ -12,4 +12,5 @@ public interface AdminService {
     List<UserDto> getAllUsers();
     UserDto changeUserRole(int userId, RoleChangeRequest request);
     List<StoreWithUserDto> getAllStoresWithUsers();
+    StoreWithUserDto toggleStoreVerification(Long storeId, boolean verificationStatus);
 }

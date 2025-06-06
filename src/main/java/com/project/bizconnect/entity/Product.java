@@ -28,9 +28,6 @@ public class Product {
     @Column(nullable = false)
     private int stockQuantity;
 
-    @Column(nullable = false)
-    private boolean hasVariants = false;
-
     // Many products belong to one store
     @ManyToOne
     @JoinColumn(name = "store_id", nullable = false)
@@ -41,13 +38,7 @@ public class Product {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    // One product can have many variants
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
-    private List<ProductVariant> variants = new ArrayList<>();
-
     // Reviews for this product
 //    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
 //    private List<Review> reviews = new ArrayList<>();
 }
-
-

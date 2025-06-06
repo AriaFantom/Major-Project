@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -73,5 +74,23 @@ public class StoreServiceImpl implements StoreService {
         return stores.stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public boolean isAuthenticatedUserStoreOwner(Long storeId) {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!(principal instanceof User)) {
+            return false;
+        }
+
+        User user = (User) principal;
+        Optional<Store> storeOptional = storeRepository.findById(storeId);
+
+        if (storeOptional.isEmpty()) {
+            return false;
+        }
+
+        Store store = storeOptional.get();
+        return store.getOwner().getId() == user.getId();
     }
 }

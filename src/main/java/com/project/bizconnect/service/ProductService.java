@@ -7,4 +7,5 @@ public interface ProductService {
     List<ProductDto> getAllProducts();
     ProductDto getProductById(Long id);
     ProductDto createProduct(ProductDto productDto);
+    List<ProductDto> getProductsByStoreId(Long storeId);
 }

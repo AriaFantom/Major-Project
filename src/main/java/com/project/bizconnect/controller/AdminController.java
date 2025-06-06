@@ -9,15 +9,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.project.bizconnect.dto.ProductDto;
 import com.project.bizconnect.dto.CategoryDto;
+import com.project.bizconnect.dto.CategoryResponseDto;
 import com.project.bizconnect.service.ProductService;
 import com.project.bizconnect.service.CategoryService;
 import com.project.bizconnect.service.AdminService;
+import com.project.bizconnect.service.StoreService;
 import com.project.bizconnect.dto.UserDto;
 import com.project.bizconnect.dto.RoleChangeRequest;
+import com.project.bizconnect.dto.StoreVerificationRequest;
+import com.project.bizconnect.dto.StoreWithUserDto;
 import com.project.bizconnect.entity.Role;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @RestController
@@ -28,6 +34,7 @@ public class AdminController {
     private final ProductService productService;
     private final CategoryService categoryService;
     private final AdminService adminService;
+    private final StoreService storeService;
 
     @GetMapping
     public ResponseEntity<String> getAdmin() {
@@ -59,6 +66,18 @@ public class AdminController {
 
     @PostMapping("/products")
     public ResponseEntity<ProductDto> createProduct(@RequestBody ProductDto productDto) {
+        if (productDto.getStoreId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Store ID is required");
+        }
+        if (productDto.getCategoryId() != null) {
+            boolean categoryBelongsToStore = categoryService.isCategoryInStore(
+                productDto.getCategoryId(), productDto.getStoreId());
+
+            if (!categoryBelongsToStore) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "The specified category does not belong to the specified store");
+            }
+        }
         ProductDto created = productService.createProduct(productDto);
         return ResponseEntity.ok(created);
     }
@@ -67,5 +86,24 @@ public class AdminController {
     public ResponseEntity<CategoryDto> createCategory(@RequestBody CategoryDto categoryDto) {
         CategoryDto created = categoryService.createCategory(categoryDto);
         return ResponseEntity.ok(created);
+    }
+
+    @PutMapping("/stores/verification")
+    public ResponseEntity<StoreWithUserDto> toggleStoreVerification(
+            @RequestBody StoreVerificationRequest request) {
+        StoreWithUserDto updatedStore = adminService.toggleStoreVerification(request.getStoreId(), request.isVerified());
+        return ResponseEntity.ok(updatedStore);
+    }
+
+    @GetMapping("/products")
+    public ResponseEntity<List<ProductDto>> getAllProducts() {
+        List<ProductDto> products = productService.getAllProducts();
+        return ResponseEntity.ok(products);
+    }
+
+    @GetMapping("/categories")
+    public ResponseEntity<List<CategoryResponseDto>> getAllCategories() {
+        List<CategoryResponseDto> categories = categoryService.getAllCategoriesWithDetails();
+        return ResponseEntity.ok(categories);
     }
 }

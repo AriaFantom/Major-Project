@@ -9,7 +9,6 @@ public class ProductDto {
     private String description;
     private Double price;
     private int stockQuantity;
-    private boolean hasVariants;
     private Long storeId;
     private Long categoryId;
 }

@@ -82,4 +82,32 @@ public class AdminServiceImpl implements AdminService {
             })
             .collect(Collectors.toList());
     }
+
+    @Override
+    public StoreWithUserDto toggleStoreVerification(Long storeId, boolean verificationStatus) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new IllegalArgumentException("Store not found with ID: " + storeId));
+
+        store.setVerified(verificationStatus);
+        Store updatedStore = storeRepository.save(store);
+
+        User owner = updatedStore.getOwner();
+
+        return StoreWithUserDto.builder()
+                // Store details
+                .storeId(updatedStore.getStoreId())
+                .storeName(updatedStore.getStoreName())
+                .description(updatedStore.getDescription())
+                .verified(updatedStore.isVerified())
+                .email(updatedStore.getEmail())
+                .phoneNumber(updatedStore.getPhoneNumber())
+                .address(updatedStore.getAddress())
+                .websiteUrl(updatedStore.getWebsiteUrl())
+                .createdAt(updatedStore.getCreatedAt())
+                .updatedAt(updatedStore.getUpdatedAt())
+                // User details
+                .userId(owner.getId())
+                .userName(owner.getFirstName() + " " + owner.getLastName())
+                .build();
+    }
 }

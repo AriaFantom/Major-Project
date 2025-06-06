@@ -27,9 +27,4 @@ public class OrderItem {
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
-
-    // The specific variant (if any) of the product that was ordered
-    @ManyToOne
-    @JoinColumn(name = "variant_id")
-    private ProductVariant variant;
 }

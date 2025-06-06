@@ -7,4 +7,5 @@ import java.util.List;
 public interface StoreService {
     StoreDto createStore(StoreDto storeDto);
     List<StoreDto> getStoresByAuthenticatedSeller();
+    boolean isAuthenticatedUserStoreOwner(Long storeId);
 }

@@ -29,7 +29,6 @@ public class ProductServiceImpl implements ProductService {
         dto.setDescription(product.getDescription());
         dto.setPrice(product.getPrice());
         dto.setStockQuantity(product.getStockQuantity());
-        dto.setHasVariants(product.isHasVariants());
         dto.setStoreId(product.getStore().getStoreId());
         dto.setCategoryId(product.getCategory() != null ? product.getCategory().getId() : null);
         return dto;
@@ -53,19 +52,31 @@ public class ProductServiceImpl implements ProductService {
     public ProductDto createProduct(ProductDto dto) {
         Store store = storeRepository.findById(dto.getStoreId())
                 .orElseThrow(() -> new IllegalArgumentException("Store not found"));
+
         Product product = new Product();
         product.setName(dto.getName());
         product.setDescription(dto.getDescription());
         product.setPrice(dto.getPrice());
         product.setStockQuantity(dto.getStockQuantity());
-        product.setHasVariants(dto.isHasVariants());
         product.setStore(store);
+
         if (dto.getCategoryId() != null) {
             Category category = categoryRespository.findById(dto.getCategoryId())
                     .orElseThrow(() -> new IllegalArgumentException("Category not found"));
             product.setCategory(category);
         }
+
         Product saved = productRepository.save(product);
         return mapToDto(saved);
+    }
+
+    @Override
+    public List<ProductDto> getProductsByStoreId(Long storeId) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new IllegalArgumentException("Store not found"));
+
+        return productRepository.findByStore(store).stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
     }
 }
