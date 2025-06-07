@@ -93,4 +93,12 @@ public class StoreServiceImpl implements StoreService {
         Store store = storeOptional.get();
         return store.getOwner().getId() == user.getId();
     }
+
+    @Override
+    public List<StoreDto> getAllVerifiedStores() {
+        return storeRepository.findByIsVerifiedTrue()
+                .stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
 }

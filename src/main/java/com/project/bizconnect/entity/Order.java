@@ -3,6 +3,7 @@ package com.project.bizconnect.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -16,8 +17,9 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long orderId;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status;
+    private OrderStatus status = OrderStatus.PENDING;
 
     @Column(nullable = false)
     private Double totalAmount;
@@ -26,19 +28,29 @@ public class Order {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    // Many orders can be placed by one user (customer)
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    private String paymentMethod;
+    private String paymentId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
+
     @ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)
     private User customer;
 
-    // Many orders belong to one store (the seller fulfilling the order)
     @ManyToOne
     @JoinColumn(name = "store_id", nullable = false)
     private Store store;
 
+    @ManyToOne
+    @JoinColumn(name = "address_id")
+    private Address shippingAddress;
 
-    // One order has many order items
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderItem> items = new ArrayList<>();
-
 }
