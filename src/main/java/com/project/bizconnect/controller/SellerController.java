@@ -1,12 +1,16 @@
 package com.project.bizconnect.controller;
 
 import com.project.bizconnect.dto.*;
+import com.project.bizconnect.entity.User;
 import com.project.bizconnect.service.CategoryService;
+import com.project.bizconnect.service.OrderService;
 import com.project.bizconnect.service.ProductService;
 import com.project.bizconnect.service.StoreService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -15,11 +19,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/seller")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('SELLER')")
 public class SellerController {
 
     private final StoreService storeService;
     private final CategoryService categoryService;
     private final ProductService productService;
+    private final OrderService orderService;
 
     @PostMapping("/stores")
     public ResponseEntity<StoreDto> createStore(@RequestBody StoreDto storeDto) {
@@ -32,7 +38,6 @@ public class SellerController {
         List<StoreDto> stores = storeService.getStoresByAuthenticatedSeller();
         return ResponseEntity.ok(stores);
     }
-
 
     @GetMapping
     public ResponseEntity<String> getSeller() {
@@ -103,5 +108,37 @@ public class SellerController {
         }
 
         return ResponseEntity.ok(product);
+    }
+
+    // Order management endpoints
+
+    @GetMapping("/orders")
+    public ResponseEntity<List<OrderResponseDto>> getSellerOrders(@AuthenticationPrincipal User seller) {
+        List<OrderResponseDto> orders = orderService.getSellerOrders(seller);
+        return ResponseEntity.ok(orders);
+    }
+
+    @GetMapping("/orders/{orderId}")
+    public ResponseEntity<OrderResponseDto> getOrderById(
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal User seller) {
+        OrderResponseDto order = orderService.getSellerOrder(orderId, seller);
+        return ResponseEntity.ok(order);
+    }
+
+    @PatchMapping("/orders/{orderId}/status/shipped")
+    public ResponseEntity<OrderResponseDto> markOrderAsShipped(
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal User seller) {
+        OrderResponseDto updatedOrder = orderService.updateOrderStatus(orderId, "SHIPPED", seller);
+        return ResponseEntity.ok(updatedOrder);
+    }
+
+    @PatchMapping("/orders/{orderId}/status/delivered")
+    public ResponseEntity<OrderResponseDto> markOrderAsDelivered(
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal User seller) {
+        OrderResponseDto updatedOrder = orderService.updateOrderStatus(orderId, "DELIVERED", seller);
+        return ResponseEntity.ok(updatedOrder);
     }
 }

@@ -100,7 +100,7 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new EntityNotFoundException("Order not found with id: " + orderId));
 
         // Ensure the order belongs to the customer
-        if (!order.getCustomer().getId().equals(customer.getId())) {
+        if (order.getCustomer().getId() != customer.getId()) {
             throw new AccessDeniedException("You don't have permission to access this order");
         }
 
@@ -264,9 +264,10 @@ public class OrderServiceImpl implements OrderService {
         for (OrderItem item : order.getItems()) {
             OrderItemResponseDto itemDto = new OrderItemResponseDto();
             itemDto.setOrderItemId(item.getOrderItemId());
-            itemDto.setProductId(item.getProduct().getId());
+            itemDto.setProductId(item.getProduct().getProductId());
             itemDto.setProductName(item.getProduct().getName());
-            itemDto.setProductImage(item.getProduct().getImageUrl());
+            // Since there is no imageUrl field, we'll set a placeholder or leave it out
+            // itemDto.setProductImage(""); // Uncomment and modify if you have an alternative field
             itemDto.setQuantity(item.getQuantity());
             itemDto.setPrice(item.getPrice());
             itemDto.setSubtotal(item.getPrice() * item.getQuantity());
