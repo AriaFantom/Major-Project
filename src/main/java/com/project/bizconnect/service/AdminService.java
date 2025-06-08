@@ -15,4 +15,12 @@ public interface AdminService {
     // New methods for customer and seller statistics
     List<CustomerStatsDto> getAllCustomersWithStats();
     List<SellerStatsDto> getAllSellersWithStores();
+
+    // New methods for order management
+    List<MainOrderResponseDto> getAllOrdersWithDetails();
+    MainOrderResponseDto getOrderByIdWithDetails(Long mainOrderId);
+
+    // Methods for updating order statuses
+    MainOrderResponseDto updateOrderStatus(Long orderId, OrderStatusUpdateDto statusUpdate);
+    SubOrderDto updateSubOrderStatus(Long subOrderId, SubOrderStatusUpdateDto statusUpdate);
 }

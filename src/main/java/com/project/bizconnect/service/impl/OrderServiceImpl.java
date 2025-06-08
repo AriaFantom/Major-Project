@@ -6,6 +6,7 @@ import com.project.bizconnect.repository.AddressRepository;
 import com.project.bizconnect.repository.OrderRepository;
 import com.project.bizconnect.repository.ProductRepository;
 import com.project.bizconnect.repository.StoreRepository;
+import com.project.bizconnect.service.MainOrderService;
 import com.project.bizconnect.service.OrderService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final StoreRepository storeRepository;
     private final AddressRepository addressRepository;
+    private final MainOrderService mainOrderService;
 
     @Override
     @Transactional
@@ -189,15 +191,28 @@ public class OrderServiceImpl implements OrderService {
             throw new IllegalArgumentException("Invalid order status: " + status);
         }
 
-        // Only allow SHIPPED and DELIVERED statuses to be set by seller or admin
-        if ((newStatus == OrderStatus.SHIPPED || newStatus == OrderStatus.DELIVERED) &&
-            order.getStatus() == OrderStatus.PROCESSING) {
+        // Different rules for admins and sellers
+        if (isAdmin) {
+            // Admins can change to any status
             order.setStatus(newStatus);
-        } else {
-            throw new IllegalStateException("Invalid status transition from " + order.getStatus() + " to " + newStatus);
+        } else if (isSeller) {
+            // Sellers are restricted to specific status transitions
+            // Only allow SHIPPED and DELIVERED statuses to be set by seller
+            if ((newStatus == OrderStatus.SHIPPED || newStatus == OrderStatus.DELIVERED) &&
+                order.getStatus() == OrderStatus.PROCESSING) {
+                order.setStatus(newStatus);
+            } else {
+                throw new IllegalStateException("Invalid status transition from " + order.getStatus() + " to " + newStatus);
+            }
         }
 
         Order updatedOrder = orderRepository.save(order);
+
+        // After updating the sub-order status, update the main order status if this order is associated with a main order
+        if (updatedOrder.getMainOrder() != null) {
+            mainOrderService.updateMainOrderStatus(orderId);
+        }
+
         return mapOrderToResponseDto(updatedOrder);
     }
 

@@ -196,6 +196,94 @@ public class MainOrderServiceImpl implements MainOrderService {
         return mapMainOrderToDto(updatedMainOrder);
     }
 
+    @Override
+    @Transactional
+    public void updateMainOrderStatus(Long orderId) {
+        // Find the sub-order
+        Order subOrder = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Order not found with id: " + orderId));
+
+        // Get the main order
+        MainOrder mainOrder = subOrder.getMainOrder();
+        if (mainOrder == null) {
+            return; // This order is not associated with a main order
+        }
+
+        // Get all sub-orders for this main order
+        List<Order> allSubOrders = mainOrder.getSubOrders();
+
+        // Determine the appropriate status for the main order based on sub-orders
+        OrderStatus newStatus = determineMainOrderStatus(allSubOrders);
+
+        // Update main order status if it's different
+        if (mainOrder.getStatus() != newStatus) {
+            mainOrder.setStatus(newStatus);
+            mainOrderRepository.save(mainOrder);
+        }
+    }
+
+    @Override
+    @Transactional
+    public MainOrderResponseDto updateMainOrderStatus(Long mainOrderId, String status) {
+        // Find the main order
+        MainOrder mainOrder = mainOrderRepository.findById(mainOrderId)
+                .orElseThrow(() -> new EntityNotFoundException("Main order not found with id: " + mainOrderId));
+
+        // Validate the status
+        OrderStatus newStatus;
+        try {
+            newStatus = OrderStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid order status: " + status);
+        }
+
+        // Update the main order status
+        mainOrder.setStatus(newStatus);
+
+        // For consistency, if the main order is being set to a terminal state like DELIVERED,
+        // update all sub-orders as well
+        if (newStatus == OrderStatus.DELIVERED) {
+            for (Order subOrder : mainOrder.getSubOrders()) {
+                if (subOrder.getStatus() != OrderStatus.DELIVERED) {
+                    subOrder.setStatus(OrderStatus.DELIVERED);
+                    orderRepository.save(subOrder);
+                }
+            }
+        }
+
+        MainOrder updatedMainOrder = mainOrderRepository.save(mainOrder);
+        return mapMainOrderToDto(updatedMainOrder);
+    }
+
+    private OrderStatus determineMainOrderStatus(List<Order> subOrders) {
+        // If all orders are DELIVERED, the main order is DELIVERED
+        boolean allDelivered = subOrders.stream()
+                .allMatch(order -> order.getStatus() == OrderStatus.DELIVERED);
+        if (allDelivered) {
+            return OrderStatus.DELIVERED;
+        }
+
+        // If at least one order is SHIPPED and none are in PROCESSING or PENDING, then main order is SHIPPED
+        boolean anyShipped = subOrders.stream()
+                .anyMatch(order -> order.getStatus() == OrderStatus.SHIPPED);
+        boolean noneProcessingOrPending = subOrders.stream()
+                .noneMatch(order -> order.getStatus() == OrderStatus.PROCESSING ||
+                                   order.getStatus() == OrderStatus.PENDING);
+        if (anyShipped && noneProcessingOrPending) {
+            return OrderStatus.SHIPPED;
+        }
+
+        // If any order is in PROCESSING, the main order is in PROCESSING
+        boolean anyProcessing = subOrders.stream()
+                .anyMatch(order -> order.getStatus() == OrderStatus.PROCESSING);
+        if (anyProcessing) {
+            return OrderStatus.PROCESSING;
+        }
+
+        // Otherwise, keep the main order in PENDING
+        return OrderStatus.PENDING;
+    }
+
     private String generateOrderReference() {
         return "ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }

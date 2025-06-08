@@ -14,4 +14,10 @@ public interface MainOrderService {
     List<MainOrderResponseDto> getCustomerMainOrders(User customer);
     MainOrderResponseDto addAddressToMainOrder(Long mainOrderId, OrderAddressUpdateDto addressUpdateDto, User customer);
     MainOrderResponseDto processPayment(Long mainOrderId, OrderPaymentDto paymentDto, User customer);
+
+    // New method to update main order status based on sub-orders
+    void updateMainOrderStatus(Long orderId);
+
+    // Admin method to directly set main order status
+    MainOrderResponseDto updateMainOrderStatus(Long mainOrderId, String status);
 }
