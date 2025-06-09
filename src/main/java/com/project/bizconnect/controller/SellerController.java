@@ -3,6 +3,7 @@ package com.project.bizconnect.controller;
 import com.project.bizconnect.dto.*;
 import com.project.bizconnect.entity.User;
 import com.project.bizconnect.service.CategoryService;
+import com.project.bizconnect.service.FollowerService;
 import com.project.bizconnect.service.OrderService;
 import com.project.bizconnect.service.ProductService;
 import com.project.bizconnect.service.StoreService;
@@ -17,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/seller")
@@ -28,6 +30,7 @@ public class SellerController {
     private final CategoryService categoryService;
     private final ProductService productService;
     private final OrderService orderService;
+    private final FollowerService followerService; // Inject FollowerService
 
     @PostMapping("/stores")
     public ResponseEntity<StoreDto> createStore(@RequestBody StoreDto storeDto) {
@@ -149,5 +152,38 @@ public class SellerController {
             @AuthenticationPrincipal User seller) {
         OrderResponseDto updatedOrder = orderService.updateOrderStatus(orderId, "DELIVERED", seller);
         return ResponseEntity.ok(updatedOrder);
+    }
+
+    // Store followers endpoints
+    @GetMapping("/stores/{storeId}/followers")
+    public ResponseEntity<List<FollowerDto>> getStoreFollowers(
+            @PathVariable Long storeId,
+            @AuthenticationPrincipal User seller) {
+
+        // Verify store ownership
+        boolean isOwner = storeService.isAuthenticatedUserStoreOwner(storeId);
+        if (!isOwner) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "You can only view followers for stores you own");
+        }
+
+        List<FollowerDto> followers = followerService.getStoreFollowers(storeId);
+        return ResponseEntity.ok(followers);
+    }
+
+    @GetMapping("/stores/{storeId}/followers/count")
+    public ResponseEntity<Map<String, Long>> getStoreFollowerCount(
+            @PathVariable Long storeId,
+            @AuthenticationPrincipal User seller) {
+
+        // Verify store ownership
+        boolean isOwner = storeService.isAuthenticatedUserStoreOwner(storeId);
+        if (!isOwner) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "You can only view follower count for stores you own");
+        }
+
+        long followerCount = followerService.getFollowerCount(storeId);
+        return ResponseEntity.ok(Map.of("followerCount", followerCount));
     }
 }

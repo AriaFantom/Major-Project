@@ -18,4 +18,10 @@ public class StoreDto {
     private String websiteUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    // Follower count for this store
+    private Long followerCount;
+
+    // Flag to indicate if the current user is following this store (used for UI)
+    private Boolean currentUserFollowing;
 }

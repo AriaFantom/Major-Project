@@ -8,6 +8,7 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 
 @Service
@@ -49,6 +50,10 @@ public class FileStorageServiceImpl implements FileStorageService {
                 .contentType(file.getContentType())
                 .build());
 
-        return String.format("%s/%s/%s", endpoint, bucketName, objectName);
+        // Build the full URL using the ProductController endpoint for images
+        return ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/shop/products/images/")
+                .path(objectName)
+                .toUriString();
     }
 }

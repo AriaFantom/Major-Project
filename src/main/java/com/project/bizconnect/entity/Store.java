@@ -5,6 +5,8 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Setter
 @Getter
@@ -50,4 +52,7 @@ public class Store {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // Store followers
+    @OneToMany(mappedBy = "store", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<StoreFollower> followers = new ArrayList<>();
 }

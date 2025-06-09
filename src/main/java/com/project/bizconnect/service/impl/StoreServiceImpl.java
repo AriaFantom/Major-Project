@@ -101,4 +101,37 @@ public class StoreServiceImpl implements StoreService {
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<StoreDto> getStoresByIds(List<Long> storeIds, User currentUser) {
+        List<Store> stores = storeRepository.findAllById(storeIds);
+        return stores.stream()
+                .map(store -> {
+                    StoreDto dto = mapToDto(store);
+                    // Add follower count
+                    dto.setFollowerCount((long) store.getFollowers().size());
+
+                    // Check if current user is following
+                    if (currentUser != null) {
+                        boolean isFollowing = store.getFollowers().stream()
+                                .anyMatch(follower -> follower.getUser().getId() == currentUser.getId());
+                        dto.setCurrentUserFollowing(isFollowing);
+                    }
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<StoreDto> getAllStoresWithFollowerCounts() {
+        List<Store> stores = storeRepository.findAll();
+        return stores.stream()
+                .map(store -> {
+                    StoreDto dto = mapToDto(store);
+                    // Add follower count
+                    dto.setFollowerCount((long) store.getFollowers().size());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
 }

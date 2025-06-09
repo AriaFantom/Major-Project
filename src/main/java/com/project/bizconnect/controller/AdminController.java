@@ -1,33 +1,20 @@
 package com.project.bizconnect.controller;
 
 import com.project.bizconnect.dto.*;
+import com.project.bizconnect.entity.Role;
+import com.project.bizconnect.entity.User;
+import com.project.bizconnect.service.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import com.project.bizconnect.service.ProductService;
-import com.project.bizconnect.service.CategoryService;
-import com.project.bizconnect.service.AdminService;
-import com.project.bizconnect.service.StoreService;
-import com.project.bizconnect.service.OrderService;
-import com.project.bizconnect.service.MainOrderService;
-import com.project.bizconnect.entity.Role;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import com.project.bizconnect.entity.User;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -40,6 +27,7 @@ public class AdminController {
     private final StoreService storeService;
     private final OrderService orderService;
     private final MainOrderService mainOrderService;
+    private final FollowerService followerService;
 
     @GetMapping
     public ResponseEntity<String> getAdmin() {
@@ -191,5 +179,25 @@ public class AdminController {
 
         OrderResponseDto updatedOrder = orderService.updateOrderStatus(id, statusUpdateDto.getStatus(), admin);
         return ResponseEntity.ok(updatedOrder);
+    }
+
+    // Store followers endpoints for admin
+    @GetMapping("/stores/{storeId}/followers")
+    public ResponseEntity<List<FollowerDto>> getStoreFollowers(@PathVariable Long storeId) {
+        List<FollowerDto> followers = followerService.getStoreFollowers(storeId);
+        return ResponseEntity.ok(followers);
+    }
+
+    @GetMapping("/stores/{storeId}/followers/count")
+    public ResponseEntity<Map<String, Long>> getStoreFollowerCount(@PathVariable Long storeId) {
+        long followerCount = followerService.getFollowerCount(storeId);
+        return ResponseEntity.ok(Map.of("followerCount", followerCount));
+    }
+
+    // Get all stores with follower counts
+    @GetMapping("/stores/with-followers")
+    public ResponseEntity<List<StoreDto>> getAllStoresWithFollowerCounts() {
+        List<StoreDto> stores = storeService.getAllStoresWithFollowerCounts();
+        return ResponseEntity.ok(stores);
     }
 }
