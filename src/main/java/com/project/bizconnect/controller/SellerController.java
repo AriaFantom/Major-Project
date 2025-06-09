@@ -8,10 +8,12 @@ import com.project.bizconnect.service.ProductService;
 import com.project.bizconnect.service.StoreService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -61,16 +63,21 @@ public class SellerController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdCategory);
     }
 
-    @PostMapping("/products")
-    public ResponseEntity<ProductDto> createProduct(@RequestBody ProductDto productDto) {
+    @PostMapping(value = "/products", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+    public ResponseEntity<ProductDto> createProduct(
+            @RequestPart("product") ProductDto productDto,
+            @RequestPart("images") List<MultipartFile> images) throws Exception {
+
         if (productDto.getStoreId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Store ID is required");
         }
+
         boolean isOwner = storeService.isAuthenticatedUserStoreOwner(productDto.getStoreId());
         if (!isOwner) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "You can only add products to stores you own");
         }
+
         if (productDto.getCategoryId() != null) {
             boolean categoryBelongsToStore = categoryService.isCategoryInStore(
                     productDto.getCategoryId(), productDto.getStoreId());
@@ -79,7 +86,9 @@ public class SellerController {
                         "The specified category does not belong to the specified store");
             }
         }
-        ProductDto created = productService.createProduct(productDto);
+
+        // Use the new method that supports image upload
+        ProductDto created = productService.createProductWithImages(productDto, images);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 

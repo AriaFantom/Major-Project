@@ -2,6 +2,7 @@ package com.project.bizconnect.controller;
 
 import com.project.bizconnect.dto.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,7 +20,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.project.bizconnect.entity.User;
@@ -66,11 +69,15 @@ public class AdminController {
         return ResponseEntity.ok(updated);
     }
 
-    @PostMapping("/products")
-    public ResponseEntity<ProductResponseDto> createProduct(@RequestBody ProductDto productDto) {
+    @PostMapping(value = "/products", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+    public ResponseEntity<ProductResponseDto> createProduct(
+            @RequestPart("product") ProductDto productDto,
+            @RequestPart("images") List<MultipartFile> images) throws Exception {
+
         if (productDto.getStoreId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Store ID is required");
         }
+
         if (productDto.getCategoryId() != null) {
             boolean categoryBelongsToStore = categoryService.isCategoryInStore(
                 productDto.getCategoryId(), productDto.getStoreId());
@@ -80,7 +87,10 @@ public class AdminController {
                     "The specified category does not belong to the specified store");
             }
         }
-        ProductDto created = productService.createProduct(productDto);
+
+        // Use the new method that supports image uploads
+        ProductDto created = productService.createProductWithImages(productDto, images);
+
         // Convert to response DTO with additional details
         ProductResponseDto response = productService.getProductByIdWithDetails(created.getProductId());
         return ResponseEntity.ok(response);
