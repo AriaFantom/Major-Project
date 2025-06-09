@@ -1,6 +1,8 @@
 package com.project.bizconnect.dto;
 
 import lombok.Data;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 public class ProductResponseDto {
@@ -17,4 +19,7 @@ public class ProductResponseDto {
     // Category details
     private Long categoryId;
     private String categoryName;
+
+    // Image URLs
+    private List<String> imageUrls = new ArrayList<>();
 }

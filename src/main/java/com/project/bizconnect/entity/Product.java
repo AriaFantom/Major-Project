@@ -38,6 +38,10 @@ public class Product {
     @JoinColumn(name = "category_id")
     private Category category;
 
+    // One product can have multiple images
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductImage> images = new ArrayList<>();
+
     // Reviews for this product
 //    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
 //    private List<Review> reviews = new ArrayList<>();
