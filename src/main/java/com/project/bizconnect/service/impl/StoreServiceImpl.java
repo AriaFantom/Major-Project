@@ -223,4 +223,16 @@ public class StoreServiceImpl implements StoreService {
                 })
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public Optional<StoreDto> getVerifiedStoreById(Long storeId) {
+        return storeRepository.findById(storeId)
+                .filter(Store::isVerified) // Only return the store if it's verified
+                .map(store -> {
+                    StoreDto dto = mapToDto(store);
+                    // Add follower count
+                    dto.setFollowerCount((long) store.getFollowers().size());
+                    return dto;
+                });
+    }
 }

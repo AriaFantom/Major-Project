@@ -57,4 +57,11 @@ public class StoreController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @GetMapping("/{storeId}")
+    public ResponseEntity<StoreDto> getVerifiedStoreById(@PathVariable Long storeId) {
+        return storeService.getVerifiedStoreById(storeId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 }

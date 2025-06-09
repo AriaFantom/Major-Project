@@ -5,6 +5,7 @@ import com.project.bizconnect.entity.User;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface StoreService {
     StoreDto createStore(StoreDto storeDto);
@@ -14,4 +15,5 @@ public interface StoreService {
     List<StoreDto> getAllVerifiedStores();
     List<StoreDto> getStoresByIds(List<Long> storeIds, User currentUser);
     List<StoreDto> getAllStoresWithFollowerCounts();
+    Optional<StoreDto> getVerifiedStoreById(Long storeId); // New method for getting a specific verified store
 }
