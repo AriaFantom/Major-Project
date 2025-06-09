@@ -21,10 +21,13 @@ public class StoreWithUserDto {
     private String phoneNumber;
     private String address;
     private String websiteUrl;
+    private String imageUrl; // Added image URL field
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     // User details
     private int userId;
-    private String userName;
+    private String userFirstName; // Separate first name
+    private String userLastName; // Separate last name
+    private String userName; // Keep for backward compatibility
 }

@@ -16,6 +16,7 @@ public class StoreDto {
     private String phoneNumber;
     private String address;
     private String websiteUrl;
+    private String imageUrl;  // Added field for store image URL
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

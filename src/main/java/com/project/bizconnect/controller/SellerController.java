@@ -30,12 +30,15 @@ public class SellerController {
     private final CategoryService categoryService;
     private final ProductService productService;
     private final OrderService orderService;
-    private final FollowerService followerService; // Inject FollowerService
+    private final FollowerService followerService;
 
-    @PostMapping("/stores")
-    public ResponseEntity<StoreDto> createStore(@RequestBody StoreDto storeDto) {
-        StoreDto created = storeService.createStore(storeDto);
-        return ResponseEntity.ok(created);
+    @PostMapping(value = "/stores", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+    public ResponseEntity<StoreDto> createStore(
+            @RequestPart("store") StoreDto storeDto,
+            @RequestPart(value = "image", required = false) MultipartFile image) throws Exception {
+
+        StoreDto created = storeService.createStoreWithImage(storeDto, image);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @GetMapping("/stores")
@@ -90,14 +93,14 @@ public class SellerController {
             }
         }
 
-        // Use the new method that supports image upload
+
         ProductDto created = productService.createProductWithImages(productDto, images);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @GetMapping("/products")
     public ResponseEntity<List<ProductResponseDto>> getProductsByStore(@RequestParam Long storeId) {
-        // Verify store ownership
+
         boolean isOwner = storeService.isAuthenticatedUserStoreOwner(storeId);
         if (!isOwner) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
@@ -112,7 +115,6 @@ public class SellerController {
     public ResponseEntity<ProductResponseDto> getProductById(@PathVariable Long productId) {
         ProductResponseDto product = productService.getProductByIdWithDetails(productId);
 
-        // Verify store ownership
         boolean isOwner = storeService.isAuthenticatedUserStoreOwner(product.getStoreId());
         if (!isOwner) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
@@ -122,7 +124,6 @@ public class SellerController {
         return ResponseEntity.ok(product);
     }
 
-    // Order management endpoints
 
     @GetMapping("/orders")
     public ResponseEntity<List<OrderResponseDto>> getSellerOrders(@AuthenticationPrincipal User seller) {
@@ -187,3 +188,4 @@ public class SellerController {
         return ResponseEntity.ok(Map.of("followerCount", followerCount));
     }
 }
+

@@ -6,19 +6,34 @@ import com.project.bizconnect.entity.Store;
 import com.project.bizconnect.entity.User;
 import com.project.bizconnect.repository.StoreRepository;
 import com.project.bizconnect.service.StoreService;
+import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class StoreServiceImpl implements StoreService {
 
     private final StoreRepository storeRepository;
+    private final MinioClient minioClient;
+
+    @Value("${minio.bucket}")
+    private String bucketName;
+
+    @Value("${app.base-url:http://localhost:8080}")
+    private String baseUrl;
 
     private StoreDto mapToDto(Store store) {
         StoreDto dto = new StoreDto();
@@ -31,6 +46,17 @@ public class StoreServiceImpl implements StoreService {
         dto.setPhoneNumber(store.getPhoneNumber());
         dto.setAddress(store.getAddress());
         dto.setWebsiteUrl(store.getWebsiteUrl());
+
+        // Generate full URL for store image if available
+        if (store.getImageUrl() != null && !store.getImageUrl().isEmpty()) {
+            dto.setImageUrl(org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentContextPath()
+                    .path("/shop/stores/image/")
+                    .path(store.getImageUrl())
+                    .toUriString());
+        } else {
+            dto.setImageUrl(null);
+        }
+
         dto.setCreatedAt(store.getCreatedAt());
         dto.setUpdatedAt(store.getUpdatedAt());
         return dto;
@@ -52,6 +78,69 @@ public class StoreServiceImpl implements StoreService {
         store.setAddress(storeDto.getAddress());
         store.setWebsiteUrl(storeDto.getWebsiteUrl());
         Store saved = storeRepository.save(store);
+        return mapToDto(saved);
+    }
+
+    @Override
+    public StoreDto createStoreWithImage(StoreDto storeDto, MultipartFile image) throws Exception {
+        log.info("Creating store with image. Store name: {}, Image null: {}",
+                storeDto.getStoreName(), image == null);
+
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!(principal instanceof User)) {
+            throw new IllegalStateException("Unauthorized");
+        }
+
+        User user = (User) principal;
+        Store store = new Store();
+        store.setStoreName(storeDto.getStoreName());
+        store.setDescription(storeDto.getDescription());
+        store.setOwner(user);
+        store.setEmail(storeDto.getEmail());
+        store.setPhoneNumber(storeDto.getPhoneNumber());
+        store.setAddress(storeDto.getAddress());
+        store.setWebsiteUrl(storeDto.getWebsiteUrl());
+
+        // Handle image upload
+        if (image != null && !image.isEmpty()) {
+            log.info("Processing image upload. Original filename: {}, Content type: {}, Size: {}",
+                    image.getOriginalFilename(), image.getContentType(), image.getSize());
+
+            // Generate a unique file name
+            String originalFilename = image.getOriginalFilename();
+            String extension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+            String objectName = "store-" + UUID.randomUUID() + extension;
+            log.info("Generated object name for MinIO: {}", objectName);
+
+            // Upload to MinIO
+            try (InputStream inputStream = image.getInputStream()) {
+                minioClient.putObject(
+                        PutObjectArgs.builder()
+                                .bucket(bucketName)
+                                .object(objectName)
+                                .stream(inputStream, image.getSize(), -1)
+                                .contentType(image.getContentType())
+                                .build()
+                );
+
+                // Set the image URL
+                log.info("Successfully uploaded to MinIO. Setting imageUrl: {}", objectName);
+                store.setImageUrl(objectName);
+            } catch (Exception e) {
+                log.error("Error uploading image to MinIO", e);
+                throw e;
+            }
+        } else {
+            log.info("No image provided or image is empty");
+        }
+
+        Store saved = storeRepository.save(store);
+        log.info("Store saved to database. Store ID: {}, Has imageUrl: {}",
+                saved.getStoreId(), saved.getImageUrl() != null);
+
         return mapToDto(saved);
     }
 

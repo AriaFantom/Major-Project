@@ -63,6 +63,15 @@ public class AdminServiceImpl implements AdminService {
             .map(store -> {
                 User owner = store.getOwner();
 
+                // Generate full URL for store image if available
+                String imageUrl = null;
+                if (store.getImageUrl() != null && !store.getImageUrl().isEmpty()) {
+                    imageUrl = org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentContextPath()
+                            .path("/shop/stores/image/")
+                            .path(store.getImageUrl())
+                            .toUriString();
+                }
+
                 return StoreWithUserDto.builder()
                     // Store details
                     .storeId(store.getStoreId())
@@ -73,11 +82,14 @@ public class AdminServiceImpl implements AdminService {
                     .phoneNumber(store.getPhoneNumber())
                     .address(store.getAddress())
                     .websiteUrl(store.getWebsiteUrl())
+                    .imageUrl(imageUrl) // Using the generated full URL
                     .createdAt(store.getCreatedAt())
                     .updatedAt(store.getUpdatedAt())
                     // User details
                     .userId(owner.getId())
-                    .userName(owner.getFirstName() + " " + owner.getLastName())
+                    .userFirstName(owner.getFirstName())
+                    .userLastName(owner.getLastName())
+                    .userName(owner.getFirstName() + " " + owner.getLastName())  // Keep for backward compatibility
                     .build();
             })
             .collect(Collectors.toList());
@@ -93,6 +105,15 @@ public class AdminServiceImpl implements AdminService {
 
         User owner = updatedStore.getOwner();
 
+        // Generate full URL for store image if available
+        String imageUrl = null;
+        if (updatedStore.getImageUrl() != null && !updatedStore.getImageUrl().isEmpty()) {
+            imageUrl = org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentContextPath()
+                    .path("/shop/stores/image/")
+                    .path(updatedStore.getImageUrl())
+                    .toUriString();
+        }
+
         return StoreWithUserDto.builder()
                 // Store details
                 .storeId(updatedStore.getStoreId())
@@ -103,11 +124,14 @@ public class AdminServiceImpl implements AdminService {
                 .phoneNumber(updatedStore.getPhoneNumber())
                 .address(updatedStore.getAddress())
                 .websiteUrl(updatedStore.getWebsiteUrl())
+                .imageUrl(imageUrl) // Using the generated full URL
                 .createdAt(updatedStore.getCreatedAt())
                 .updatedAt(updatedStore.getUpdatedAt())
                 // User details
                 .userId(owner.getId())
-                .userName(owner.getFirstName() + " " + owner.getLastName())
+                .userFirstName(owner.getFirstName())
+                .userLastName(owner.getLastName())
+                .userName(owner.getFirstName() + " " + owner.getLastName()) // Keep for backward compatibility
                 .build();
     }
 
@@ -192,6 +216,17 @@ public class AdminServiceImpl implements AdminService {
                         SellerStatsDto.SellerStoreDto storeDto = new SellerStatsDto.SellerStoreDto();
                         storeDto.setStoreId(store.getStoreId());
                         storeDto.setStoreName(store.getStoreName());
+
+                        // Generate full URL for store image if available
+                        if (store.getImageUrl() != null && !store.getImageUrl().isEmpty()) {
+                            storeDto.setImageUrl(org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentContextPath()
+                                .path("/shop/stores/image/")
+                                .path(store.getImageUrl())
+                                .toUriString());
+                        } else {
+                            storeDto.setImageUrl(null);
+                        }
+
                         return storeDto;
                     })
                     .collect(Collectors.toList());

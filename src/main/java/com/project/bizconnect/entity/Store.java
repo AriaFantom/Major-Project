@@ -44,6 +44,9 @@ public class Store {
     @Column(name = "website_url")
     private String websiteUrl;
 
+    @Column(name = "image_url")
+    private String imageUrl;  // Added field for store image URL
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

@@ -17,5 +17,6 @@ public class SellerStatsDto {
     public static class SellerStoreDto {
         private Long storeId;
         private String storeName;
+        private String imageUrl;  // Added field for store image URL
     }
 }
