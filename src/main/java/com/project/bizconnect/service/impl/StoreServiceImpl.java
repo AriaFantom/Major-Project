@@ -4,6 +4,7 @@ import com.project.bizconnect.dto.StoreDto;
 import com.project.bizconnect.entity.Role;
 import com.project.bizconnect.entity.Store;
 import com.project.bizconnect.entity.User;
+import com.project.bizconnect.repository.ProductRepository;
 import com.project.bizconnect.repository.StoreRepository;
 import com.project.bizconnect.service.StoreService;
 import io.minio.MinioClient;
@@ -28,6 +29,7 @@ public class StoreServiceImpl implements StoreService {
 
     private final StoreRepository storeRepository;
     private final MinioClient minioClient;
+    private final ProductRepository productRepository;
 
     @Value("${minio.bucket}")
     private String bucketName;
@@ -56,6 +58,11 @@ public class StoreServiceImpl implements StoreService {
         } else {
             dto.setImageUrl(null);
         }
+
+        // Set totalProducts
+        dto.setTotalProducts((long) productRepository.findByStore(store).size());
+        // Set followerCount using followers list size
+        dto.setFollowerCount((long) store.getFollowers().size());
 
         dto.setCreatedAt(store.getCreatedAt());
         dto.setUpdatedAt(store.getUpdatedAt());

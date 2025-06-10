@@ -97,7 +97,6 @@ public class CategoryServiceImpl implements CategoryService {
                 .collect(Collectors.toList());
     }
 
-    @Override
     public CategoryResponseDto getCategoryByIdWithDetails(Long id) {
         Category category = categoryRespository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Category not found"));

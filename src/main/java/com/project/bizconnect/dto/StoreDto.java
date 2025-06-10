@@ -23,6 +23,9 @@ public class StoreDto {
     // Follower count for this store
     private Long followerCount;
 
+    // Total products for this store
+    private Long totalProducts;
+
     // Flag to indicate if the current user is following this store (used for UI)
     private Boolean currentUserFollowing;
 }
