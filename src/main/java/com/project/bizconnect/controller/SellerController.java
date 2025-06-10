@@ -2,11 +2,7 @@ package com.project.bizconnect.controller;
 
 import com.project.bizconnect.dto.*;
 import com.project.bizconnect.entity.User;
-import com.project.bizconnect.service.CategoryService;
-import com.project.bizconnect.service.FollowerService;
-import com.project.bizconnect.service.OrderService;
-import com.project.bizconnect.service.ProductService;
-import com.project.bizconnect.service.StoreService;
+import com.project.bizconnect.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -17,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -31,6 +28,7 @@ public class SellerController {
     private final ProductService productService;
     private final OrderService orderService;
     private final FollowerService followerService;
+    private final ChatService chatService;
 
     @PostMapping(value = "/stores", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<StoreDto> createStore(
@@ -187,5 +185,40 @@ public class SellerController {
         long followerCount = followerService.getFollowerCount(storeId);
         return ResponseEntity.ok(Map.of("followerCount", followerCount));
     }
-}
 
+    // Chat related endpoints for sellers
+
+    // Get all chat rooms for a specific store
+    @GetMapping("/stores/{storeId}/chat/rooms")
+    public ResponseEntity<List<ChatRoomDto>> getStoreChatRooms(
+            @PathVariable Long storeId,
+            @AuthenticationPrincipal User seller
+    ) {
+        // Verify store ownership
+        boolean isOwner = storeService.isAuthenticatedUserStoreOwner(storeId);
+        if (!isOwner) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "You can only view chat rooms for stores you own");
+        }
+
+        List<ChatRoomDto> chatRooms = chatService.getStoreChatRooms(storeId);
+        return ResponseEntity.ok(chatRooms);
+    }
+
+    // Get all chat rooms across all stores owned by the seller
+    @GetMapping("/chat/rooms")
+    public ResponseEntity<List<ChatRoomDto>> getAllSellerChatRooms() {
+        // Get all stores owned by the seller
+        List<StoreDto> sellerStores = storeService.getStoresByAuthenticatedSeller();
+
+        // Initialize a list to hold all chat rooms
+        List<ChatRoomDto> allChatRooms = new ArrayList<>();
+
+        // Collect all chat rooms from each store
+        for (StoreDto store : sellerStores) {
+            allChatRooms.addAll(chatService.getStoreChatRooms(store.getStoreId()));
+        }
+
+        return ResponseEntity.ok(allChatRooms);
+    }
+}

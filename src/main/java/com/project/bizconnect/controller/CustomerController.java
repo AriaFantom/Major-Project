@@ -1,9 +1,12 @@
 package com.project.bizconnect.controller;
 
 import com.project.bizconnect.dto.AddressDto;
+import com.project.bizconnect.dto.ChatRoomDto;
 import com.project.bizconnect.dto.StoreDto;
+import com.project.bizconnect.entity.ChatRoom;
 import com.project.bizconnect.entity.User;
 import com.project.bizconnect.service.AddressService;
+import com.project.bizconnect.service.ChatService;
 import com.project.bizconnect.service.FollowerService;
 import com.project.bizconnect.service.StoreService;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,7 @@ public class CustomerController {
     private final AddressService addressService;
     private final FollowerService followerService;
     private final StoreService storeService;
+    private final ChatService chatService;
 
     @GetMapping()
     public ResponseEntity<String> getCustomer() {
@@ -98,5 +102,36 @@ public class CustomerController {
             @AuthenticationPrincipal User currentUser) {
         boolean isFollowing = followerService.isFollowingStore(storeId, currentUser);
         return ResponseEntity.ok(Map.of("following", isFollowing));
+    }
+
+    // Chat related endpoints
+
+    // Endpoint for customer to create a chat room with a store
+    @PostMapping("/chat/rooms/create")
+    public ResponseEntity<?> createChatRoom(
+            @RequestParam Long storeId,
+            @AuthenticationPrincipal User currentUser
+    ) {
+        Long customerId = Long.valueOf(currentUser.getId());
+
+        // Check if a chat room already exists
+        ChatRoom existingRoom = chatService.getChatRoomByStoreAndCustomer(storeId, customerId);
+        if (existingRoom != null) {
+            return ResponseEntity.ok(existingRoom);
+        }
+
+        // Create new chat room
+        ChatRoom chatRoom = chatService.createChatRoom(storeId, customerId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(chatRoom);
+    }
+
+    // Get all chat rooms for the authenticated customer
+    @GetMapping("/chat/rooms")
+    public ResponseEntity<List<ChatRoomDto>> getCustomerChatRooms(
+            @AuthenticationPrincipal User currentUser
+    ) {
+        Long customerId = Long.valueOf(currentUser.getId());
+        List<ChatRoomDto> chatRooms = chatService.getCustomerChatRooms(customerId);
+        return ResponseEntity.ok(chatRooms);
     }
 }
