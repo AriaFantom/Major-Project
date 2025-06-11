@@ -14,6 +14,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -190,14 +193,9 @@ public class OrderServiceImpl implements OrderService {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid order status: " + status);
         }
-
-        // Different rules for admins and sellers
         if (isAdmin) {
-            // Admins can change to any status
             order.setStatus(newStatus);
         } else if (isSeller) {
-            // Sellers are restricted to specific status transitions
-            // Only allow SHIPPED and DELIVERED statuses to be set by seller
             if ((newStatus == OrderStatus.SHIPPED || newStatus == OrderStatus.DELIVERED) &&
                 order.getStatus() == OrderStatus.PROCESSING) {
                 order.setStatus(newStatus);
@@ -351,6 +349,61 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList());
 
         return topCustomers;
+    }
+
+    @Override
+    public List<OrderStatisticsDto> getDailyOrderStatisticsByStore(Long storeId, LocalDate startDate, LocalDate endDate, User seller) {
+        // Validate store ownership
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new EntityNotFoundException("Store not found with id: " + storeId));
+
+        if (store.getOwner().getId() != seller.getId()) {
+            throw new AccessDeniedException("You do not have access to this store");
+        }
+
+        // Find all orders for this store
+        List<Order> storeOrders = orderRepository.findByStore(store);
+
+        // Filter orders by date range in memory
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = endDate.plusDays(1).atStartOfDay();
+
+        List<Order> filteredOrders = storeOrders.stream()
+                .filter(order -> {
+                    LocalDateTime orderTime = order.getCreatedAt();
+                    return !orderTime.isBefore(startDateTime) && orderTime.isBefore(endDateTime);
+                })
+                .collect(Collectors.toList());
+
+        // Group orders by date and calculate daily statistics
+        Map<LocalDate, List<Order>> ordersByDate = filteredOrders.stream()
+                .collect(Collectors.groupingBy(
+                        order -> order.getCreatedAt().toLocalDate()
+                ));
+
+        // Create a list of statistics for each day in the range (including days with no orders)
+        List<OrderStatisticsDto> statistics = new ArrayList<>();
+        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+            LocalDate currentDate = date;
+
+            // Get orders for this day or empty list if none
+            List<Order> dailyOrders = ordersByDate.getOrDefault(currentDate, List.of());
+
+            // Calculate statistics for this day
+            int orderCount = dailyOrders.size();
+            BigDecimal totalAmount = dailyOrders.stream()
+                    .map(order -> BigDecimal.valueOf(order.getTotalAmount()))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            // Add statistics for this day
+            statistics.add(OrderStatisticsDto.builder()
+                    .date(currentDate)
+                    .orders(orderCount)
+                    .amount(totalAmount)
+                    .build());
+        }
+
+        return statistics;
     }
 
     private OrderResponseDto mapOrderToResponseDto(Order order) {

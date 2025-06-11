@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -208,13 +209,9 @@ public class SellerController {
     // Get all chat rooms across all stores owned by the seller
     @GetMapping("/chat/rooms")
     public ResponseEntity<List<ChatRoomDto>> getAllSellerChatRooms() {
-        // Get all stores owned by the seller
         List<StoreDto> sellerStores = storeService.getStoresByAuthenticatedSeller();
-
-        // Initialize a list to hold all chat rooms
         List<ChatRoomDto> allChatRooms = new ArrayList<>();
 
-        // Collect all chat rooms from each store
         for (StoreDto store : sellerStores) {
             allChatRooms.addAll(chatService.getStoreChatRooms(store.getStoreId()));
         }
@@ -226,7 +223,6 @@ public class SellerController {
     public ResponseEntity<StoreStatsDto> getStoreStatistics(
             @PathVariable Long storeId,
             @AuthenticationPrincipal User seller) {
-        // Check if the seller owns the store
         if (!storeService.isAuthenticatedUserStoreOwner(storeId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this store");
         }
@@ -238,7 +234,6 @@ public class SellerController {
             @PathVariable Long storeId,
             @RequestParam(defaultValue = "10") Integer limit,
             @AuthenticationPrincipal User seller) {
-        // Check if the seller owns the store
         if (!storeService.isAuthenticatedUserStoreOwner(storeId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this store");
         }
@@ -250,10 +245,27 @@ public class SellerController {
             @PathVariable Long storeId,
             @RequestParam(defaultValue = "10") Integer limit,
             @AuthenticationPrincipal User seller) {
-        // Check if the seller owns the store
         if (!storeService.isAuthenticatedUserStoreOwner(storeId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this store");
         }
         return ResponseEntity.ok(orderService.getTopCustomersByStore(storeId, limit, seller));
+    }
+
+    @GetMapping("/stores/{storeId}/order-statistics")
+    public ResponseEntity<List<OrderStatisticsDto>> getOrderStatistics(
+            @PathVariable Long storeId,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @AuthenticationPrincipal User seller) {
+
+        if (!storeService.isAuthenticatedUserStoreOwner(storeId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this store");
+        }
+
+        // Default to last 30 days if dates not provided
+        LocalDate end = endDate == null ? LocalDate.now() : LocalDate.parse(endDate);
+        LocalDate start = startDate == null ? end.minusDays(30) : LocalDate.parse(startDate);
+
+        return ResponseEntity.ok(orderService.getDailyOrderStatisticsByStore(storeId, start, end, seller));
     }
 }
