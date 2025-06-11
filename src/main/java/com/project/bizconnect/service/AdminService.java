@@ -23,4 +23,14 @@ public interface AdminService {
     // Methods for updating order statuses
     MainOrderResponseDto updateOrderStatus(Long orderId, OrderStatusUpdateDto statusUpdate);
     SubOrderDto updateSubOrderStatus(Long subOrderId, SubOrderStatusUpdateDto statusUpdate);
+
+    // New admin dashboard statistics methods
+    AdminDashboardStatsDto getDashboardStatistics();
+    List<CategorySalesPercentageDto> getCategorySalesPercentages();
+
+    // Monthly sales chart data
+    List<MonthlySalesDto> getMonthlySalesData(Integer year);
+
+    // Top performing stores data
+    List<ShopPerformanceDto> getTopPerformingStores(Integer limit);
 }

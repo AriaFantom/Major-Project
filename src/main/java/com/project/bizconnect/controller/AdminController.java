@@ -76,10 +76,7 @@ public class AdminController {
             }
         }
 
-        // Use the new method that supports image uploads
         ProductDto created = productService.createProductWithImages(productDto, images);
-
-        // Convert to response DTO with additional details
         ProductResponseDto response = productService.getProductByIdWithDetails(created.getProductId());
         return ResponseEntity.ok(response);
     }
@@ -103,10 +100,30 @@ public class AdminController {
         return ResponseEntity.ok(products);
     }
 
-    @GetMapping("/products/{id}")
-    public ResponseEntity<ProductResponseDto> getProductById(@PathVariable Long id) {
-        ProductResponseDto product = productService.getProductByIdWithDetails(id);
-        return ResponseEntity.ok(product);
+    @GetMapping("/dashboard/statistics")
+    public ResponseEntity<AdminDashboardStatsDto> getDashboardStatistics() {
+        AdminDashboardStatsDto statistics = adminService.getDashboardStatistics();
+        return ResponseEntity.ok(statistics);
+    }
+
+    @GetMapping("/dashboard/category-sales")
+    public ResponseEntity<List<CategorySalesPercentageDto>> getCategorySalesPercentages() {
+        List<CategorySalesPercentageDto> categorySales = adminService.getCategorySalesPercentages();
+        return ResponseEntity.ok(categorySales);
+    }
+
+    @GetMapping("/dashboard/monthly-sales")
+    public ResponseEntity<List<MonthlySalesDto>> getMonthlySalesData(
+            @RequestParam(required = false) Integer year) {
+        List<MonthlySalesDto> monthlySales = adminService.getMonthlySalesData(year);
+        return ResponseEntity.ok(monthlySales);
+    }
+
+    @GetMapping("/dashboard/top-stores")
+    public ResponseEntity<List<ShopPerformanceDto>> getTopPerformingStores(
+            @RequestParam(required = false) Integer limit) {
+        List<ShopPerformanceDto> topStores = adminService.getTopPerformingStores(limit);
+        return ResponseEntity.ok(topStores);
     }
 
     @GetMapping("/categories")
@@ -158,7 +175,6 @@ public class AdminController {
             @PathVariable Long id,
             @RequestBody OrderStatusUpdateDto statusUpdateDto,
             @AuthenticationPrincipal User admin) {
-        // Verify that the user is an admin
         if (admin.getRole() != Role.ADMIN) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only admins can update order status");
         }
@@ -172,16 +188,13 @@ public class AdminController {
             @PathVariable Long id,
             @RequestBody SubOrderStatusUpdateDto statusUpdateDto,
             @AuthenticationPrincipal User admin) {
-        // Verify that the user is an admin
         if (admin.getRole() != Role.ADMIN) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only admins can update order status");
         }
-
         OrderResponseDto updatedOrder = orderService.updateOrderStatus(id, statusUpdateDto.getStatus(), admin);
         return ResponseEntity.ok(updatedOrder);
     }
 
-    // Store followers endpoints for admin
     @GetMapping("/stores/{storeId}/followers")
     public ResponseEntity<List<FollowerDto>> getStoreFollowers(@PathVariable Long storeId) {
         List<FollowerDto> followers = followerService.getStoreFollowers(storeId);
@@ -201,4 +214,3 @@ public class AdminController {
         return ResponseEntity.ok(stores);
     }
 }
-

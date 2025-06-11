@@ -6,10 +6,14 @@ import com.project.bizconnect.repository.StoreRepository;
 import com.project.bizconnect.repository.UsersRepository;
 import com.project.bizconnect.repository.OrderRepository;
 import com.project.bizconnect.repository.MainOrderRepository;
+import com.project.bizconnect.repository.ProductRepository;
 import com.project.bizconnect.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -21,6 +25,7 @@ public class AdminServiceImpl implements AdminService {
     private final StoreRepository storeRepository;
     private final OrderRepository orderRepository;
     private final MainOrderRepository mainOrderRepository;
+    private final ProductRepository productRepository;
 
     private UserDto mapToDto(User user) {
         UserDto dto = new UserDto();
@@ -62,8 +67,6 @@ public class AdminServiceImpl implements AdminService {
         return allStores.stream()
             .map(store -> {
                 User owner = store.getOwner();
-
-                // Generate full URL for store image if available
                 String imageUrl = null;
                 if (store.getImageUrl() != null && !store.getImageUrl().isEmpty()) {
                     imageUrl = org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentContextPath()
@@ -73,7 +76,6 @@ public class AdminServiceImpl implements AdminService {
                 }
 
                 return StoreWithUserDto.builder()
-                    // Store details
                     .storeId(store.getStoreId())
                     .storeName(store.getStoreName())
                     .description(store.getDescription())
@@ -82,14 +84,13 @@ public class AdminServiceImpl implements AdminService {
                     .phoneNumber(store.getPhoneNumber())
                     .address(store.getAddress())
                     .websiteUrl(store.getWebsiteUrl())
-                    .imageUrl(imageUrl) // Using the generated full URL
+                    .imageUrl(imageUrl)
                     .createdAt(store.getCreatedAt())
                     .updatedAt(store.getUpdatedAt())
-                    // User details
                     .userId(owner.getId())
                     .userFirstName(owner.getFirstName())
                     .userLastName(owner.getLastName())
-                    .userName(owner.getFirstName() + " " + owner.getLastName())  // Keep for backward compatibility
+                    .userName(owner.getFirstName() + " " + owner.getLastName())
                     .build();
             })
             .collect(Collectors.toList());
@@ -104,8 +105,6 @@ public class AdminServiceImpl implements AdminService {
         Store updatedStore = storeRepository.save(store);
 
         User owner = updatedStore.getOwner();
-
-        // Generate full URL for store image if available
         String imageUrl = null;
         if (updatedStore.getImageUrl() != null && !updatedStore.getImageUrl().isEmpty()) {
             imageUrl = org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentContextPath()
@@ -115,7 +114,6 @@ public class AdminServiceImpl implements AdminService {
         }
 
         return StoreWithUserDto.builder()
-                // Store details
                 .storeId(updatedStore.getStoreId())
                 .storeName(updatedStore.getStoreName())
                 .description(updatedStore.getDescription())
@@ -124,10 +122,9 @@ public class AdminServiceImpl implements AdminService {
                 .phoneNumber(updatedStore.getPhoneNumber())
                 .address(updatedStore.getAddress())
                 .websiteUrl(updatedStore.getWebsiteUrl())
-                .imageUrl(imageUrl) // Using the generated full URL
+                .imageUrl(imageUrl)
                 .createdAt(updatedStore.getCreatedAt())
                 .updatedAt(updatedStore.getUpdatedAt())
-                // User details
                 .userId(owner.getId())
                 .userFirstName(owner.getFirstName())
                 .userLastName(owner.getLastName())
@@ -307,6 +304,201 @@ public class AdminServiceImpl implements AdminService {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid order status: " + statusUpdate.getStatus());
         }
+    }
+
+    @Override
+    public AdminDashboardStatsDto getDashboardStatistics() {
+        // Count total products in the system
+        long totalProducts = productRepository.count();
+
+        // Count total stores in the system
+        long totalStores = storeRepository.count();
+
+        // Count total customers (users with CUSTOMER role)
+        long totalCustomers = usersRepository.findAllByRole(Role.CUSTOMER).size();
+
+        // Calculate total sales across all orders
+        List<Order> allOrders = orderRepository.findAll();
+        double totalSales = allOrders.stream()
+                .filter(order -> order.getPaymentStatus() == PaymentStatus.PAID)
+                .mapToDouble(Order::getTotalAmount)
+                .sum();
+
+        // Build and return dashboard statistics
+        return AdminDashboardStatsDto.builder()
+                .totalSales((long) totalSales)
+                .totalProducts(totalProducts)
+                .totalStores(totalStores)
+                .totalCustomers(totalCustomers)
+                .build();
+    }
+
+    @Override
+    public List<CategorySalesPercentageDto> getCategorySalesPercentages() {
+        // Get all completed orders
+        List<Order> completedOrders = orderRepository.findAll().stream()
+                .filter(order -> order.getPaymentStatus() == PaymentStatus.PAID)
+                .collect(Collectors.toList());
+
+        // Calculate total sales amount across all categories
+        double totalSalesAmount = completedOrders.stream()
+                .mapToDouble(Order::getTotalAmount)
+                .sum();
+
+        // Map to store category ID and its sales amount
+        Map<Long, Double> categorySales = new HashMap<>();
+        Map<Long, String> categoryNames = new HashMap<>();
+
+        // Process each order and its items
+        for (Order order : completedOrders) {
+            for (OrderItem item : order.getItems()) {
+                Product product = item.getProduct();
+                if (product != null && product.getCategory() != null) {
+                    Category category = product.getCategory();
+                    Long categoryId = category.getId();
+                    String categoryName = category.getName();
+
+                    // Store category name for reference
+                    categoryNames.putIfAbsent(categoryId, categoryName);
+
+                    // Calculate sales amount for this item
+                    double salesAmount = item.getPrice() * item.getQuantity();
+
+                    // Add to category sales
+                    categorySales.put(categoryId,
+                            categorySales.getOrDefault(categoryId, 0.0) + salesAmount);
+                }
+            }
+        }
+
+        // Create DTOs with sales percentages
+        List<CategorySalesPercentageDto> result = new ArrayList<>();
+        for (Map.Entry<Long, Double> entry : categorySales.entrySet()) {
+            Long categoryId = entry.getKey();
+            Double salesAmount = entry.getValue();
+
+            // Calculate percentage
+            BigDecimal percentage = BigDecimal.ZERO;
+            if (totalSalesAmount > 0) {
+                percentage = BigDecimal.valueOf(salesAmount / totalSalesAmount * 100)
+                        .setScale(2, RoundingMode.HALF_UP);
+            }
+
+            // Create DTO
+            result.add(CategorySalesPercentageDto.builder()
+                    .categoryId(categoryId)
+                    .categoryName(categoryNames.get(categoryId))
+                    .salesPercentage(percentage)
+                    .totalSalesAmount(BigDecimal.valueOf(salesAmount).setScale(2, RoundingMode.HALF_UP))
+                    .build());
+        }
+
+        // Sort by percentage descending
+        result.sort((a, b) -> b.getSalesPercentage().compareTo(a.getSalesPercentage()));
+
+        return result;
+    }
+
+    @Override
+    public List<MonthlySalesDto> getMonthlySalesData(Integer year) {
+        // If no year is provided, use the current year
+        int targetYear = (year != null) ? year : java.time.LocalDate.now().getYear();
+
+        // Get all completed/paid orders
+        List<Order> completedOrders = orderRepository.findAll().stream()
+                .filter(order -> order.getPaymentStatus() == PaymentStatus.PAID)
+                .collect(Collectors.toList());
+
+        // Initialize a map to hold monthly sales
+        Map<Integer, BigDecimal> monthlySales = new HashMap<>();
+        for (int i = 1; i <= 12; i++) {
+            monthlySales.put(i, BigDecimal.ZERO);
+        }
+
+        // Calculate sales for each month
+        for (Order order : completedOrders) {
+            // Extract the month and year from the order creation date
+            LocalDateTime orderDate = order.getCreatedAt();
+            int orderYear = orderDate.getYear();
+            int orderMonth = orderDate.getMonthValue(); // 1-12
+
+            // Only count orders from the requested year
+            if (orderYear == targetYear) {
+                // Add the order amount to the appropriate month
+                BigDecimal currentAmount = monthlySales.get(orderMonth);
+                BigDecimal orderAmount = BigDecimal.valueOf(order.getTotalAmount());
+                monthlySales.put(orderMonth, currentAmount.add(orderAmount));
+            }
+        }
+
+        // Create a list of MonthlySalesDto with month names
+        List<MonthlySalesDto> result = new ArrayList<>();
+        String[] monthNames = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+        for (int i = 1; i <= 12; i++) {
+            result.add(MonthlySalesDto.builder()
+                    .name(monthNames[i-1])
+                    .value(monthlySales.get(i))
+                    .build());
+        }
+
+        return result;
+    }
+
+    @Override
+    public List<ShopPerformanceDto> getTopPerformingStores(Integer limit) {
+        // Default limit to 10 if not specified
+        int maxResults = (limit != null && limit > 0) ? limit : 10;
+
+        // Get all stores
+        List<Store> allStores = storeRepository.findAll();
+
+        // Get all completed/paid orders
+        List<Order> completedOrders = orderRepository.findAll().stream()
+                .filter(order -> order.getPaymentStatus() == PaymentStatus.PAID)
+                .collect(Collectors.toList());
+
+        // Map to store store data and calculate metrics
+        Map<Long, String> storeNames = new HashMap<>();
+        Map<Long, BigDecimal> storeSales = new HashMap<>();
+        Map<Long, Set<Integer>> storeCustomers = new HashMap<>();
+
+        // Process each completed order
+        for (Order order : completedOrders) {
+            Store store = order.getStore();
+            if (store != null) {
+                Long storeId = store.getStoreId();
+                Integer customerId = order.getCustomer().getId();
+                BigDecimal orderAmount = BigDecimal.valueOf(order.getTotalAmount());
+
+                // Store the store name for reference
+                storeNames.putIfAbsent(storeId, store.getStoreName());
+
+                // Add the customer to this store's set of unique customers
+                storeCustomers.computeIfAbsent(storeId, k -> new HashSet<>()).add(customerId);
+
+                // Add the sales amount for this store
+                storeSales.put(storeId,
+                        storeSales.getOrDefault(storeId, BigDecimal.ZERO).add(orderAmount));
+            }
+        }
+
+        // Create performance DTOs for each store
+        List<ShopPerformanceDto> performanceData = new ArrayList<>();
+        for (Long storeId : storeNames.keySet()) {
+            ShopPerformanceDto dto = ShopPerformanceDto.builder()
+                    .name(storeNames.get(storeId))
+                    .sales(storeSales.getOrDefault(storeId, BigDecimal.ZERO))
+                    .customers((long) storeCustomers.getOrDefault(storeId, Collections.emptySet()).size())
+                    .build();
+            performanceData.add(dto);
+        }
+
+        // Sort by sales in descending order and limit the results
+        return performanceData.stream()
+                .sorted(Comparator.comparing(ShopPerformanceDto::getSales).reversed())
+                .limit(maxResults)
+                .collect(Collectors.toList());
     }
 
     private OrderStatus determineMainOrderStatus(List<Order> subOrders) {

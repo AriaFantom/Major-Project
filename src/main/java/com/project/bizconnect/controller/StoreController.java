@@ -34,8 +34,6 @@ public class StoreController {
         return ResponseEntity.ok(storeService.getAllVerifiedStores());
     }
 
-    // Moved the most-followed endpoint before the {storeId} endpoint and added the "/by" prefix
-    // to avoid conflicts with path variable mappings
     @GetMapping("/by/most-followed")
     public ResponseEntity<List<StoreDto>> getStoresByMostFollowers(
             @RequestParam(defaultValue = "10") Integer limit) {
