@@ -84,6 +84,18 @@ public class ProductController {
         return ResponseEntity.ok(productService.getProductsByStoreIdWithDetails(storeId));
     }
 
+    @GetMapping("/best-sellers")
+    public ResponseEntity<List<ProductResponseDto>> getBestSellingProducts(
+            @RequestParam(defaultValue = "10") Integer limit) {
+        return ResponseEntity.ok(productService.getBestSellingProducts(limit));
+    }
+
+    @GetMapping("/recently-added")
+    public ResponseEntity<List<ProductResponseDto>> getRecentlyAddedProducts(
+            @RequestParam(defaultValue = "10") Integer limit) {
+        return ResponseEntity.ok(productService.getRecentlyAddedProducts(limit));
+    }
+
     @GetMapping("/images/{objectName}")
     public ResponseEntity<InputStreamResource> getProductImage(@PathVariable String objectName) {
         try {

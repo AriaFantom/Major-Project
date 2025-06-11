@@ -21,4 +21,8 @@ public interface ProductService {
     ProductDto createProductWithImages(ProductDto productDto, List<MultipartFile> images) throws Exception;
     ProductDto addImageToProduct(Long productId, MultipartFile image) throws Exception;
     void deleteProductImage(Long productId, Long imageId);
+
+    // New methods for best sellers and recently added products
+    List<ProductResponseDto> getBestSellingProducts(Integer limit);
+    List<ProductResponseDto> getRecentlyAddedProducts(Integer limit);
 }

@@ -221,4 +221,39 @@ public class SellerController {
 
         return ResponseEntity.ok(allChatRooms);
     }
+
+    @GetMapping("/stores/{storeId}/stats")
+    public ResponseEntity<StoreStatsDto> getStoreStatistics(
+            @PathVariable Long storeId,
+            @AuthenticationPrincipal User seller) {
+        // Check if the seller owns the store
+        if (!storeService.isAuthenticatedUserStoreOwner(storeId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this store");
+        }
+        return ResponseEntity.ok(orderService.getStoreStatistics(storeId, seller));
+    }
+
+    @GetMapping("/stores/{storeId}/recent-orders")
+    public ResponseEntity<List<OrderResponseDto>> getRecentOrders(
+            @PathVariable Long storeId,
+            @RequestParam(defaultValue = "10") Integer limit,
+            @AuthenticationPrincipal User seller) {
+        // Check if the seller owns the store
+        if (!storeService.isAuthenticatedUserStoreOwner(storeId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this store");
+        }
+        return ResponseEntity.ok(orderService.getRecentOrdersByStore(storeId, limit, seller));
+    }
+
+    @GetMapping("/stores/{storeId}/top-customers")
+    public ResponseEntity<List<TopCustomerDto>> getTopCustomers(
+            @PathVariable Long storeId,
+            @RequestParam(defaultValue = "10") Integer limit,
+            @AuthenticationPrincipal User seller) {
+        // Check if the seller owns the store
+        if (!storeService.isAuthenticatedUserStoreOwner(storeId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this store");
+        }
+        return ResponseEntity.ok(orderService.getTopCustomersByStore(storeId, limit, seller));
+    }
 }

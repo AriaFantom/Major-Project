@@ -248,4 +248,20 @@ public class ProductServiceImpl implements ProductService {
                 .map(this::mapToResponseDto)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<ProductResponseDto> getBestSellingProducts(Integer limit) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, limit);
+        return productRepository.findBestSellingProducts(pageable).stream()
+                .map(this::mapToResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ProductResponseDto> getRecentlyAddedProducts(Integer limit) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, limit);
+        return productRepository.findByOrderByCreatedAtDesc(pageable).stream()
+                .map(this::mapToResponseDto)
+                .collect(Collectors.toList());
+    }
 }

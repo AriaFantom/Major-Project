@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.InputStream;
@@ -31,6 +32,14 @@ public class StoreController {
     @GetMapping
     public ResponseEntity<List<StoreDto>> getAllVerifiedStores() {
         return ResponseEntity.ok(storeService.getAllVerifiedStores());
+    }
+
+    // Moved the most-followed endpoint before the {storeId} endpoint and added the "/by" prefix
+    // to avoid conflicts with path variable mappings
+    @GetMapping("/by/most-followed")
+    public ResponseEntity<List<StoreDto>> getStoresByMostFollowers(
+            @RequestParam(defaultValue = "10") Integer limit) {
+        return ResponseEntity.ok(storeService.getStoresByMostFollowers(limit));
     }
 
     @GetMapping("/image/{objectName}")

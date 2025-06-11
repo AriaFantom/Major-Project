@@ -16,4 +16,5 @@ public interface StoreService {
     List<StoreDto> getStoresByIds(List<Long> storeIds, User currentUser);
     List<StoreDto> getAllStoresWithFollowerCounts();
     Optional<StoreDto> getVerifiedStoreById(Long storeId); // New method for getting a specific verified store
+    List<StoreDto> getStoresByMostFollowers(Integer limit); // New method to get stores ordered by follower count
 }

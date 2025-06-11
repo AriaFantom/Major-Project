@@ -16,4 +16,9 @@ public interface OrderService {
     // Seller specific methods
     List<OrderResponseDto> getSellerOrders(User seller);
     OrderResponseDto getSellerOrder(Long orderId, User seller);
+
+    // New seller statistics methods
+    StoreStatsDto getStoreStatistics(Long storeId, User seller);
+    List<OrderResponseDto> getRecentOrdersByStore(Long storeId, Integer limit, User seller);
+    List<TopCustomerDto> getTopCustomersByStore(Long storeId, Integer limit, User seller);
 }

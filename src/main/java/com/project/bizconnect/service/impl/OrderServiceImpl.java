@@ -243,6 +243,116 @@ public class OrderServiceImpl implements OrderService {
         return mapOrderToResponseDto(order);
     }
 
+    @Override
+    public StoreStatsDto getStoreStatistics(Long storeId, User seller) {
+        // Validate store ownership
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new EntityNotFoundException("Store not found with id: " + storeId));
+
+        if (store.getOwner().getId() != seller.getId()) {
+            throw new AccessDeniedException("You do not have access to this store");
+        }
+
+        // Find all orders for this store
+        List<Order> storeOrders = orderRepository.findByStore(store);
+
+        // Calculate total sales
+        double totalSales = storeOrders.stream()
+                .filter(order -> order.getStatus().toString().equals("PAID") ||
+                                order.getStatus().toString().equals("SHIPPED") ||
+                                order.getStatus().toString().equals("DELIVERED"))
+                .mapToDouble(Order::getTotalAmount)
+                .sum();
+
+        // Count total orders
+        long totalOrders = storeOrders.size();
+
+        // Count total products in the store
+        long totalProducts = productRepository.countByStore(store);
+
+        // Count unique customers who made orders
+        long totalCustomers = storeOrders.stream()
+                .map(order -> Long.valueOf(order.getCustomer().getId()))
+                .distinct()
+                .count();
+
+        // Build and return the statistics DTO
+        return StoreStatsDto.builder()
+                .storeId(storeId)
+                .storeName(store.getStoreName())
+                .storeImageUrl(store.getImageUrl())
+                .totalSales((long)totalSales)
+                .totalOrders(totalOrders)
+                .totalProducts(totalProducts)
+                .totalCustomers(totalCustomers)
+                .build();
+    }
+
+    @Override
+    public List<OrderResponseDto> getRecentOrdersByStore(Long storeId, Integer limit, User seller) {
+        // Validate store ownership
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new EntityNotFoundException("Store not found with id: " + storeId));
+
+        if (store.getOwner().getId() != seller.getId()) {
+            throw new AccessDeniedException("You do not have access to this store");
+        }
+
+        // Find recent orders for this store with limit
+        List<Order> recentOrders = orderRepository.findByStoreOrderByCreatedAtDesc(store,
+                org.springframework.data.domain.PageRequest.of(0, limit));
+
+        // Convert to DTOs and return
+        return recentOrders.stream()
+                .map(this::mapOrderToResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TopCustomerDto> getTopCustomersByStore(Long storeId, Integer limit, User seller) {
+        // Validate store ownership
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new EntityNotFoundException("Store not found with id: " + storeId));
+
+        if (store.getOwner().getId() != seller.getId()) {
+            throw new AccessDeniedException("You do not have access to this store");
+        }
+
+        // Find all orders for this store
+        List<Order> storeOrders = orderRepository.findByStore(store);
+
+        // Group orders by customer and calculate metrics
+        Map<User, List<Order>> customerOrdersMap = storeOrders.stream()
+                .filter(order -> order.getStatus().toString().equals("PAID") ||
+                                order.getStatus().toString().equals("SHIPPED") ||
+                                order.getStatus().toString().equals("DELIVERED"))
+                .collect(Collectors.groupingBy(Order::getCustomer));
+
+        // Create top customer DTOs
+        List<TopCustomerDto> topCustomers = customerOrdersMap.entrySet().stream()
+                .map(entry -> {
+                    User customer = entry.getKey();
+                    List<Order> customerOrders = entry.getValue();
+
+                    double totalSpent = customerOrders.stream()
+                            .mapToDouble(Order::getTotalAmount)
+                            .sum();
+
+                    return TopCustomerDto.builder()
+                            .customerId(Long.valueOf(customer.getId()))
+                            .customerName(customer.getFirstName() + " " + customer.getLastName())
+                            .customerEmail(customer.getEmail())
+                            .orderCount((long)customerOrders.size())
+                            .totalSpent(totalSpent)
+                            .build();
+                })
+                .sorted((c1, c2) -> Double.compare(c2.getTotalSpent(), c1.getTotalSpent())) // Sort by total spent descending
+                .limit(limit)
+                .collect(Collectors.toList());
+
+        return topCustomers;
+    }
+
     private OrderResponseDto mapOrderToResponseDto(Order order) {
         OrderResponseDto dto = new OrderResponseDto();
         dto.setOrderId(order.getOrderId());
