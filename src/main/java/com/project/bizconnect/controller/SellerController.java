@@ -1,6 +1,7 @@
 package com.project.bizconnect.controller;
 
 import com.project.bizconnect.dto.*;
+import com.project.bizconnect.entity.Story;
 import com.project.bizconnect.entity.User;
 import com.project.bizconnect.service.*;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class SellerController {
     private final OrderService orderService;
     private final FollowerService followerService;
     private final ChatService chatService;
+    private final StoryService storyService;
 
     @PostMapping(value = "/stores", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<StoreDto> createStore(
@@ -267,5 +269,64 @@ public class SellerController {
         LocalDate start = startDate == null ? end.minusDays(30) : LocalDate.parse(startDate);
 
         return ResponseEntity.ok(orderService.getDailyOrderStatisticsByStore(storeId, start, end, seller));
+    }
+
+    // Story management endpoints
+
+    /**
+     * Endpoint for uploading a story (image or video) for a specific store
+     */
+    @PostMapping(value = "/stores/{storeId}/stories", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+    public ResponseEntity<StoryDto> uploadStory(
+            @PathVariable Long storeId,
+            @RequestPart("media") MultipartFile mediaFile,
+            @RequestPart("mediaType") Story.MediaType mediaType,
+            @RequestPart(value = "caption", required = false) String caption) throws Exception {
+
+        // Verify store ownership
+        boolean isOwner = storeService.isAuthenticatedUserStoreOwner(storeId);
+        if (!isOwner) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "You can only upload stories for stores you own");
+        }
+
+        StoryDto createdStory = storyService.uploadStory(storeId, mediaFile, mediaType, caption);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdStory);
+    }
+
+    /**
+     * Endpoint to get all active stories for a specific store
+     */
+    @GetMapping("/stores/{storeId}/stories")
+    public ResponseEntity<List<StoryDto>> getStoreStories(
+            @PathVariable Long storeId) {
+
+        // Verify store ownership
+        boolean isOwner = storeService.isAuthenticatedUserStoreOwner(storeId);
+        if (!isOwner) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "You can only view stories for stores you own");
+        }
+
+        List<StoryDto> stories = storyService.getActiveStoriesByStoreId(storeId);
+        return ResponseEntity.ok(stories);
+    }
+
+    /**
+     * Endpoint to get all active stories across all stores owned by the seller
+     */
+    @GetMapping("/stories")
+    public ResponseEntity<List<StoryDto>> getAllSellerStories() {
+        List<StoryDto> stories = storyService.getActiveStoriesBySeller();
+        return ResponseEntity.ok(stories);
+    }
+
+    /**
+     * Endpoint to delete a story
+     */
+    @DeleteMapping("/stories/{storyId}")
+    public ResponseEntity<Void> deleteStory(@PathVariable Long storyId) {
+        storyService.deleteStory(storyId);
+        return ResponseEntity.noContent().build();
     }
 }
