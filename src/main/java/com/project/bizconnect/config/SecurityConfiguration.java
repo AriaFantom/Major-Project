@@ -41,7 +41,7 @@ public class SecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers("/auth/signin", "/auth/signup", "/auth/refresh").permitAll()
+                        .requestMatchers("/auth/signin", "/auth/signup", "/auth/refresh", "/auth/seller-signup").permitAll()
                         .requestMatchers("/auth/me").authenticated()
                         .requestMatchers("/shop/**").permitAll()
                         // Allow WebSocket endpoints
