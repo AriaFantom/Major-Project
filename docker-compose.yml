@@ -1,25 +1,47 @@
 services:
+  bizconnect-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: bizconnect-backend:latest
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/bizconnect
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: bizconnect
+    depends_on:
+      - mysql
+      - minio
+    ports:
+      - "8080:8080"
+
   mysql:
     image: mysql:8.0
     container_name: bizconnect-mysql
-    ports:
-      - "3306:3306"
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: "1234"
       MYSQL_DATABASE: "bizconnect"
     volumes:
       - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
 
   minio:
     image: minio/minio:latest
     container_name: bizconnect-minio
-    ports:
-      - "9000:9000"   # MinIO API
-      - "9001:9001"   # MinIO Console
+    restart: unless-stopped
     environment:
       MINIO_ROOT_USER: "minioadmin"
       MINIO_ROOT_PASSWORD: "minioadmin"
     command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"  # API
+      - "9001:9001"  # Console
     volumes:
       - minio_data:/data
 
