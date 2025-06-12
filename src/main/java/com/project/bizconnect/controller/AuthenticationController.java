@@ -2,6 +2,7 @@ package com.project.bizconnect.controller;
 
 import com.project.bizconnect.dto.JwtAuthenticationResponse;
 import com.project.bizconnect.dto.RefreshTokenRequest;
+import com.project.bizconnect.dto.SellerSignUpRequest;
 import com.project.bizconnect.dto.SignInRequest;
 import com.project.bizconnect.dto.SignUpRequest;
 import com.project.bizconnect.dto.UserDto;
@@ -25,6 +26,11 @@ public class AuthenticationController {
     @PostMapping("/signup")
     public ResponseEntity<User> signup(@RequestBody SignUpRequest signUpRequest) {
         return ResponseEntity.ok(authenticationService.signUp(signUpRequest));
+    }
+
+    @PostMapping("/seller/signup")
+    public ResponseEntity<User> signupSeller(@RequestBody SellerSignUpRequest sellerSignUpRequest) {
+        return ResponseEntity.ok(authenticationService.signUpSeller(sellerSignUpRequest));
     }
 
     @PostMapping("/signin")

@@ -2,6 +2,7 @@ package com.project.bizconnect.service;
 
 import com.project.bizconnect.dto.JwtAuthenticationResponse;
 import com.project.bizconnect.dto.RefreshTokenRequest;
+import com.project.bizconnect.dto.SellerSignUpRequest;
 import com.project.bizconnect.dto.SignInRequest;
 import com.project.bizconnect.dto.SignUpRequest;
 import com.project.bizconnect.dto.UserDto;
@@ -10,6 +11,8 @@ import com.project.bizconnect.entity.User;
 public interface AuthenticationService {
 
       User signUp(SignUpRequest signUpRequest);
+
+      User signUpSeller(SellerSignUpRequest sellerSignUpRequest);
 
       JwtAuthenticationResponse signin(SignInRequest signInRequest);
 

@@ -2,6 +2,7 @@ package com.project.bizconnect.service.impl;
 
 import com.project.bizconnect.dto.JwtAuthenticationResponse;
 import com.project.bizconnect.dto.RefreshTokenRequest;
+import com.project.bizconnect.dto.SellerSignUpRequest;
 import com.project.bizconnect.dto.SignInRequest;
 import com.project.bizconnect.dto.SignUpRequest;
 import com.project.bizconnect.dto.UserDto;
@@ -42,6 +43,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         user.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
         return usersRepository.save(user);
 
+    }
+
+    public User signUpSeller(SellerSignUpRequest sellerSignUpRequest) {
+        User user = new User();
+        user.setEmail(sellerSignUpRequest.getEmail());
+        user.setFirstName(sellerSignUpRequest.getFirstName());
+        user.setLastName(sellerSignUpRequest.getLastName());
+        user.setRole(Role.SELLER);
+        user.setPassword(passwordEncoder.encode(sellerSignUpRequest.getPassword()));
+        return usersRepository.save(user);
     }
 
     public JwtAuthenticationResponse signin(SignInRequest signInRequest) {
