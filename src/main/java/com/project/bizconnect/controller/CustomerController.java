@@ -3,12 +3,14 @@ package com.project.bizconnect.controller;
 import com.project.bizconnect.dto.AddressDto;
 import com.project.bizconnect.dto.ChatRoomDto;
 import com.project.bizconnect.dto.StoreDto;
+import com.project.bizconnect.dto.StoryDto;
 import com.project.bizconnect.entity.ChatRoom;
 import com.project.bizconnect.entity.User;
 import com.project.bizconnect.service.AddressService;
 import com.project.bizconnect.service.ChatService;
 import com.project.bizconnect.service.FollowerService;
 import com.project.bizconnect.service.StoreService;
+import com.project.bizconnect.service.StoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -28,6 +31,7 @@ public class CustomerController {
     private final FollowerService followerService;
     private final StoreService storeService;
     private final ChatService chatService;
+    private final StoryService storyService;
 
     @GetMapping()
     public ResponseEntity<String> getCustomer() {
@@ -102,6 +106,22 @@ public class CustomerController {
             @AuthenticationPrincipal User currentUser) {
         boolean isFollowing = followerService.isFollowingStore(storeId, currentUser);
         return ResponseEntity.ok(Map.of("following", isFollowing));
+    }
+
+    // New endpoint to fetch stories from followed stores
+    @GetMapping("/stories/following")
+    public ResponseEntity<List<StoryDto>> getFollowedStoresStories(@AuthenticationPrincipal User currentUser) {
+        // Get all store IDs that the current user is following
+        List<Long> followedStoreIds = followerService.getFollowedStoreIds(currentUser);
+
+        // Use the StoryService to fetch active stories from these stores
+        List<StoryDto> followedStoresStories = new ArrayList<>();
+        for (Long storeId : followedStoreIds) {
+            List<StoryDto> storeStories = storyService.getActiveStoriesByStoreId(storeId);
+            followedStoresStories.addAll(storeStories);
+        }
+
+        return ResponseEntity.ok(followedStoresStories);
     }
 
     // Chat related endpoints

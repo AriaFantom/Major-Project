@@ -16,6 +16,7 @@ public class StoryDto {
     private Long id;
     private Long storeId;
     private String storeName;
+    private String storeImageUrl; // Added field for store image
     private String mediaUrl;
     private Story.MediaType mediaType;
     private String caption;

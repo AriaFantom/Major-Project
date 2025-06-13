@@ -95,10 +95,20 @@ public class StoryServiceImpl implements StoryService {
     }
 
     private StoryDto mapToStoryDto(Story story) {
+        // Get the store image URL
+        String storeImageUrl = null;
+        if (story.getStore().getImageUrl() != null) {
+            storeImageUrl = org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentContextPath()
+                    .path("/shop/products/images/")
+                    .path(story.getStore().getImageUrl())
+                    .toUriString();
+        }
+
         return StoryDto.builder()
                 .id(story.getId())
                 .storeId(story.getStore().getStoreId())
                 .storeName(story.getStore().getStoreName())
+                .storeImageUrl(storeImageUrl) // Using the full URL with updated path
                 .mediaUrl(story.getMediaUrl())
                 .mediaType(story.getMediaType())
                 .caption(story.getCaption())
