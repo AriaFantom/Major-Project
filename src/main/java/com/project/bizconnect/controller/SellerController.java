@@ -22,7 +22,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/seller")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('SELLER')")
+
 public class SellerController {
 
     private final StoreService storeService;
@@ -271,11 +271,7 @@ public class SellerController {
         return ResponseEntity.ok(orderService.getDailyOrderStatisticsByStore(storeId, start, end, seller));
     }
 
-    // Story management endpoints
 
-    /**
-     * Endpoint for uploading a story (image or video) for a specific store
-     */
     @PostMapping(value = "/stores/{storeId}/stories", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<StoryDto> uploadStory(
             @PathVariable Long storeId,
@@ -301,7 +297,6 @@ public class SellerController {
     public ResponseEntity<List<StoryDto>> getStoreStories(
             @PathVariable Long storeId) {
 
-        // Verify store ownership
         boolean isOwner = storeService.isAuthenticatedUserStoreOwner(storeId);
         if (!isOwner) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
@@ -312,9 +307,6 @@ public class SellerController {
         return ResponseEntity.ok(stories);
     }
 
-    /**
-     * Endpoint to get all active stories across all stores owned by the seller
-     */
     @GetMapping("/stories")
     public ResponseEntity<List<StoryDto>> getAllSellerStories() {
         List<StoryDto> stories = storyService.getActiveStoriesBySeller();
