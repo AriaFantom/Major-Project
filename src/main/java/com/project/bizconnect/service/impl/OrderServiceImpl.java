@@ -188,8 +188,15 @@ public class OrderServiceImpl implements OrderService {
         if (isAdmin) {
             order.setStatus(newStatus);
         } else if (isSeller) {
-            if ((newStatus == OrderStatus.SHIPPED || newStatus == OrderStatus.DELIVERED) &&
-                order.getStatus() == OrderStatus.PROCESSING) {
+            // Allow transitions from PROCESSING to SHIPPED/DELIVERED and from SHIPPED to DELIVERED
+            boolean validTransition =
+                // From PROCESSING to either SHIPPED or DELIVERED
+                (order.getStatus() == OrderStatus.PROCESSING &&
+                    (newStatus == OrderStatus.SHIPPED || newStatus == OrderStatus.DELIVERED)) ||
+                // From SHIPPED to DELIVERED
+                (order.getStatus() == OrderStatus.SHIPPED && newStatus == OrderStatus.DELIVERED);
+
+            if (validTransition) {
                 order.setStatus(newStatus);
             } else {
                 throw new IllegalStateException("Invalid status transition from " + order.getStatus() + " to " + newStatus);

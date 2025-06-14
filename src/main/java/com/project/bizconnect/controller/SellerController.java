@@ -321,4 +321,21 @@ public class SellerController {
         storyService.deleteStory(storyId);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/stores/{storeId}/orders")
+    public ResponseEntity<List<OrderResponseDto>> getOrdersByStore(
+            @PathVariable Long storeId,
+            @RequestParam(defaultValue = "100") Integer limit,
+            @AuthenticationPrincipal User seller) {
+
+        boolean isOwner = storeService.isAuthenticatedUserStoreOwner(storeId);
+        if (!isOwner) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "You can only view orders for stores you own");
+        }
+
+        List<OrderResponseDto> orders = orderService.getRecentOrdersByStore(storeId, limit, seller);
+        return ResponseEntity.ok(orders);
+    }
 }
+
