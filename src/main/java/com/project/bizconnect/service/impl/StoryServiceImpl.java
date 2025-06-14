@@ -127,7 +127,6 @@ public class StoryServiceImpl implements StoryService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Content type is missing");
         }
 
-        // Validate based on media type
         if (mediaType == Story.MediaType.IMAGE) {
             if (!contentType.startsWith("image/")) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,

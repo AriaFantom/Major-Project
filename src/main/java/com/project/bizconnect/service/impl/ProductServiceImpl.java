@@ -86,6 +86,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<ProductDto> getAllProducts() {
         return productRepository.findAll().stream()
+                .filter(product -> product.getStore().isVerified())
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
@@ -94,6 +95,11 @@ public class ProductServiceImpl implements ProductService {
     public ProductDto getProductById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+
+        if (!product.getStore().isVerified()) {
+            throw new IllegalArgumentException("Product not available: store is not verified");
+        }
+
         return mapToDto(product);
     }
 
@@ -228,6 +234,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<ProductResponseDto> getAllProductsWithDetails() {
         return productRepository.findAll().stream()
+                .filter(product -> product.getStore().isVerified())
                 .map(this::mapToResponseDto)
                 .collect(Collectors.toList());
     }
@@ -236,6 +243,11 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponseDto getProductByIdWithDetails(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+
+        if (!product.getStore().isVerified()) {
+            throw new IllegalArgumentException("Product not available: store is not verified");
+        }
+
         return mapToResponseDto(product);
     }
 
@@ -253,6 +265,7 @@ public class ProductServiceImpl implements ProductService {
     public List<ProductResponseDto> getBestSellingProducts(Integer limit) {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, limit);
         return productRepository.findBestSellingProducts(pageable).stream()
+                .filter(product -> product.getStore().isVerified())
                 .map(this::mapToResponseDto)
                 .collect(Collectors.toList());
     }
@@ -261,6 +274,7 @@ public class ProductServiceImpl implements ProductService {
     public List<ProductResponseDto> getRecentlyAddedProducts(Integer limit) {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, limit);
         return productRepository.findByOrderByCreatedAtDesc(pageable).stream()
+                .filter(product -> product.getStore().isVerified())
                 .map(this::mapToResponseDto)
                 .collect(Collectors.toList());
     }

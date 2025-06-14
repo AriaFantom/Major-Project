@@ -247,7 +247,9 @@ public class StoreServiceImpl implements StoreService {
     public List<StoreDto> getStoresByMostFollowers(Integer limit) {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, limit);
         return storeRepository.findAllByOrderByFollowersCountDesc(pageable).stream()
+                .filter(Store::isVerified) // Only return verified stores
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
 }
+
