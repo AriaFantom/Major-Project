@@ -387,6 +387,52 @@ public class OrderServiceImpl implements OrderService {
         return statistics;
     }
 
+    @Override
+    public List<CustomerStatsDto> getAllCustomersByStore(Long storeId, User seller) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new EntityNotFoundException("Store not found with id: " + storeId));
+
+        // Verify store ownership
+        if (store.getOwner().getId() != seller.getId()) {
+            throw new AccessDeniedException("You do not have access to this store");
+        }
+
+        List<Order> storeOrders = orderRepository.findByStore(store);
+
+        // Group orders by customer
+        Map<User, List<Order>> customerOrdersMap = storeOrders.stream()
+                .filter(order -> order.getStatus().toString().equals("PAID") ||
+                                order.getStatus().toString().equals("SHIPPED") ||
+                                order.getStatus().toString().equals("DELIVERED"))
+                .collect(Collectors.groupingBy(Order::getCustomer));
+
+        // Map each customer to a CustomerStatsDto
+        List<CustomerStatsDto> customerStats = customerOrdersMap.entrySet().stream()
+                .map(entry -> {
+                    User customer = entry.getKey();
+                    List<Order> customerOrders = entry.getValue();
+
+                    double totalSpent = customerOrders.stream()
+                            .mapToDouble(Order::getTotalAmount)
+                            .sum();
+
+                    CustomerStatsDto statsDto = new CustomerStatsDto();
+                    statsDto.setUserId(customer.getId());
+                    statsDto.setFirstName(customer.getFirstName());
+                    statsDto.setLastName(customer.getLastName());
+                    statsDto.setEmail(customer.getEmail());
+                    statsDto.setJoiningDate(customer.getCreatedAt());
+                    statsDto.setTotalOrders(customerOrders.size());
+                    statsDto.setTotalSpent(totalSpent);
+
+                    return statsDto;
+                })
+                .sorted((c1, c2) -> Double.compare(c2.getTotalSpent(), c1.getTotalSpent())) // Sort by total spent descending
+                .collect(Collectors.toList());
+
+        return customerStats;
+    }
+
     private OrderResponseDto mapOrderToResponseDto(Order order) {
         OrderResponseDto dto = new OrderResponseDto();
         dto.setOrderId(order.getOrderId());

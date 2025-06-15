@@ -337,5 +337,20 @@ public class SellerController {
         List<OrderResponseDto> orders = orderService.getRecentOrdersByStore(storeId, limit, seller);
         return ResponseEntity.ok(orders);
     }
-}
 
+    @GetMapping("/stores/{storeId}/customers")
+    public ResponseEntity<List<CustomerStatsDto>> getAllStoreCustomers(
+            @PathVariable Long storeId,
+            @AuthenticationPrincipal User seller) {
+
+        // Verify store ownership
+        boolean isOwner = storeService.isAuthenticatedUserStoreOwner(storeId);
+        if (!isOwner) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "You can only view customers for stores you own");
+        }
+
+        List<CustomerStatsDto> customers = orderService.getAllCustomersByStore(storeId, seller);
+        return ResponseEntity.ok(customers);
+    }
+}

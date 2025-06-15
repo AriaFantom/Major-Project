@@ -20,6 +20,7 @@ public interface OrderService {
     StoreStatsDto getStoreStatistics(Long storeId, User seller);
     List<OrderResponseDto> getRecentOrdersByStore(Long storeId, Integer limit, User seller);
     List<TopCustomerDto> getTopCustomersByStore(Long storeId, Integer limit, User seller);
+    List<CustomerStatsDto> getAllCustomersByStore(Long storeId, User seller);
 
     List<OrderStatisticsDto> getDailyOrderStatisticsByStore(Long storeId, LocalDate startDate, LocalDate endDate, User seller);
 }
