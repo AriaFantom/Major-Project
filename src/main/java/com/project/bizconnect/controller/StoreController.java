@@ -1,5 +1,6 @@
 package com.project.bizconnect.controller;
 
+import com.project.bizconnect.dto.SearchResultDto;
 import com.project.bizconnect.dto.StoreDto;
 import com.project.bizconnect.service.StoreService;
 import io.minio.GetObjectArgs;
@@ -70,5 +71,17 @@ public class StoreController {
         return storeService.getVerifiedStoreById(storeId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Search for products and categories based on a search term
+     * The search is case-insensitive and matches partial strings
+     * @param searchTerm the term to search for
+     * @return a list of matching products and categories
+     */
+    @GetMapping("/search")
+    public ResponseEntity<SearchResultDto> searchProductsAndCategories(
+            @RequestParam String searchTerm) {
+        return ResponseEntity.ok(storeService.searchProductsAndCategories(searchTerm));
     }
 }

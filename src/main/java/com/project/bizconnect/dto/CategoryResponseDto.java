@@ -10,4 +10,5 @@ public class CategoryResponseDto {
     private String storeName;
     private Long parentCategoryId;
     private String parentCategoryName;
+    private Integer productCount; // Added for search functionality
 }

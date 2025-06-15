@@ -1,5 +1,6 @@
 package com.project.bizconnect.service;
 
+import com.project.bizconnect.dto.SearchResultDto;
 import com.project.bizconnect.dto.StoreDto;
 import com.project.bizconnect.entity.User;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,4 +18,7 @@ public interface StoreService {
     List<StoreDto> getAllStoresWithFollowerCounts();
     Optional<StoreDto> getVerifiedStoreById(Long storeId); // New method for getting a specific verified store
     List<StoreDto> getStoresByMostFollowers(Integer limit); // New method to get stores ordered by follower count
+
+    // New method for searching products and categories
+    SearchResultDto searchProductsAndCategories(String searchTerm);
 }

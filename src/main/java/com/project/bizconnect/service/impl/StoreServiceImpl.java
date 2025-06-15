@@ -1,9 +1,16 @@
 package com.project.bizconnect.service.impl;
 
+import com.project.bizconnect.dto.CategoryResponseDto;
+import com.project.bizconnect.dto.ProductResponseDto;
+import com.project.bizconnect.dto.SearchResultDto;
 import com.project.bizconnect.dto.StoreDto;
+import com.project.bizconnect.entity.Category;
+import com.project.bizconnect.entity.Product;
+import com.project.bizconnect.entity.ProductImage;
 import com.project.bizconnect.entity.Role;
 import com.project.bizconnect.entity.Store;
 import com.project.bizconnect.entity.User;
+import com.project.bizconnect.repository.CategoryRepository;
 import com.project.bizconnect.repository.ProductRepository;
 import com.project.bizconnect.repository.StoreRepository;
 import com.project.bizconnect.service.StoreService;
@@ -30,6 +37,7 @@ public class StoreServiceImpl implements StoreService {
     private final StoreRepository storeRepository;
     private final MinioClient minioClient;
     private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;  // Add CategoryRepository
 
     @Value("${minio.bucket}")
     private String bucketName;
@@ -251,5 +259,82 @@ public class StoreServiceImpl implements StoreService {
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
-}
 
+    @Override
+    public SearchResultDto searchProductsAndCategories(String searchTerm) {
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            return new SearchResultDto(List.of(), List.of());
+        }
+
+        // Search for products by name (case-insensitive, partial match)
+        List<Product> products = productRepository.findByNameContainingIgnoreCase(searchTerm.trim());
+
+        // Search for categories by name (case-insensitive, partial match)
+        List<Category> categories = categoryRepository.findByNameContainingIgnoreCase(searchTerm.trim());
+
+        // Map products to DTOs with detailed information
+        List<ProductResponseDto> productDtos = products.stream()
+                .map(this::mapToProductResponseDto)
+                .collect(Collectors.toList());
+
+        // Map categories to DTOs with detailed information
+        List<CategoryResponseDto> categoryDtos = categories.stream()
+                .map(this::mapToCategoryResponseDto)
+                .collect(Collectors.toList());
+
+        // Return combined results
+        return new SearchResultDto(productDtos, categoryDtos);
+    }
+
+    private ProductResponseDto mapToProductResponseDto(Product product) {
+        ProductResponseDto dto = new ProductResponseDto();
+        dto.setProductId(product.getProductId());
+        dto.setName(product.getName());
+        dto.setDescription(product.getDescription());
+        dto.setPrice(product.getPrice());
+        dto.setStockQuantity(product.getStockQuantity());
+
+        // Set store information
+        Store store = product.getStore();
+        dto.setStoreId(store.getStoreId());
+        dto.setStoreName(store.getStoreName());
+
+        // Set category information if available
+        Category category = product.getCategory();
+        if (category != null) {
+            dto.setCategoryId(category.getId());
+            dto.setCategoryName(category.getName());
+        }
+
+        // Add image URLs
+        if (product.getImages() != null) {
+            List<String> imageUrls = product.getImages().stream()
+                    .map(ProductImage::getImageUrl)
+                    .collect(Collectors.toList());
+            dto.setImageUrls(imageUrls);
+        }
+
+        return dto;
+    }
+
+    private CategoryResponseDto mapToCategoryResponseDto(Category category) {
+        CategoryResponseDto dto = new CategoryResponseDto();
+        dto.setId(category.getId());
+        dto.setName(category.getName());
+
+        // Set store info
+        if (category.getStore() != null) {
+            dto.setStoreId(category.getStore().getStoreId());
+            dto.setStoreName(category.getStore().getStoreName());
+        }
+
+        // Count products in this category
+        if (category.getProducts() != null) {
+            dto.setProductCount(category.getProducts().size());
+        } else {
+            dto.setProductCount(0);
+        }
+
+        return dto;
+    }
+}
