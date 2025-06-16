@@ -183,8 +183,18 @@ public class MainOrderServiceImpl implements MainOrderService {
         mainOrder.setPaymentStatus(PaymentStatus.PAID);
         mainOrder.setStatus(OrderStatus.PROCESSING);
 
-        // Update all sub-orders
+
         for (Order subOrder : mainOrder.getSubOrders()) {
+            for (OrderItem item : subOrder.getItems()) {
+                Product product = item.getProduct();
+                int orderedQuantity = item.getQuantity();
+                if (product.getStockQuantity() < orderedQuantity) {
+                    throw new IllegalStateException("Insufficient stock for product: " + product.getName());
+                }
+                product.setStockQuantity(product.getStockQuantity() - orderedQuantity);
+                productRepository.save(product);
+            }
+
             subOrder.setPaymentMethod(paymentDto.getPaymentMethod());
             subOrder.setPaymentId(paymentDto.getPaymentId());
             subOrder.setPaymentStatus(PaymentStatus.PAID);

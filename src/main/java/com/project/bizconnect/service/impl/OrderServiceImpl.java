@@ -149,6 +149,16 @@ public class OrderServiceImpl implements OrderService {
             throw new IllegalStateException("Shipping address must be set before processing payment");
         }
 
+        // Deduct stock for each product in the order
+        for (OrderItem item : order.getItems()) { // use getItems() instead of getOrderItems()
+            Product product = item.getProduct();
+            int orderedQuantity = item.getQuantity();
+            if (product.getStockQuantity() < orderedQuantity) { // use getStockQuantity() instead of getStock()
+                throw new IllegalStateException("Insufficient stock for product: " + product.getName());
+            }
+            product.setStockQuantity(product.getStockQuantity() - orderedQuantity); // use setStockQuantity()
+            productRepository.save(product);
+        }
 
         order.setPaymentMethod(paymentDto.getPaymentMethod());
         order.setPaymentId(paymentDto.getPaymentId());
